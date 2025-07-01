@@ -194,6 +194,14 @@ class Schedules:
                 self.target_table_spc_follow_up['W_err'] /= 24
 
                 worksheet_special = sh.worksheet("Annex_Targets_V2-STARS")
+                # Read follow up (planet candidates) list
+                # values = worksheet_special.get_all_values()
+                # custom_headers= [
+                #     "SPECULOOS", "Annex_Prog", "V_mag", "Alias", "Note", "Active", 
+                #     "Next Obs", "spc", "soi", "twomass", "gaia", "wise", "ra", "dec", 
+                #     "ra_err", "dec_err", "Filter_spc", "Filter_trap", "texp_spc", 
+                #     "texp_trap", "mag_j", "mag_j_err", "SpT", "e_Spt", "Teff", "distance"  ]
+
                 dataframe = pd.DataFrame(worksheet_special.get_all_records(expected_headers= [
                                 "SPECULOOS", "Annex_Prog", "V_mag", "Alias", "Note", "Active", 
                                 "Next Obs", "spc", "soi", "twomass", "gaia", "wise", "ra", "dec", 
@@ -835,8 +843,25 @@ class Schedules:
                         (Time(self.scheduled_table['end time (UTC)'][i]) -
                          Time(self.scheduled_table['start time (UTC)'][i])).value * 24 * 60
 
-                    end_scheduled_table = end_scheduled_table.append(
-                        {'target': self.scheduled_table['target'][i] + '_2',
+                    # end_scheduled_table = end_scheduled_table.append(
+                    #     {'target': self.scheduled_table['target'][i] + '_2',
+                    #      'start time (UTC)':
+                    #          self.SS1_night_blocks['end time (UTC)'][0],
+                    #      'end time (UTC)': end_before_cut,
+                    #      'duration (minutes)': (Time(end_before_cut) - Time(
+                    #          self.SS1_night_blocks['end time (UTC)'][
+                    #              0])).value * 24 * 60,
+                    #      'ra (h)': self.scheduled_table['ra (h)'][i],
+                    #      'ra (m)': self.scheduled_table['ra (m)'][i],
+                    #      'ra (s)': self.scheduled_table['ra (s)'][i],
+                    #      'dec (d)': self.scheduled_table['dec (d)'][i],
+                    #      'dec (m)': self.scheduled_table['dec (m)'][i],
+                    #      'dec (s)': self.scheduled_table['dec (s)'][i],
+                    #      'configuration':
+                    #          self.scheduled_table['configuration'][i]},
+                    #     ignore_index=True)
+                    
+                    new_row = pd.DataFrame([{'target': self.scheduled_table['target'][i] + '_2',
                          'start time (UTC)':
                              self.SS1_night_blocks['end time (UTC)'][0],
                          'end time (UTC)': end_before_cut,
@@ -850,8 +875,9 @@ class Schedules:
                          'dec (m)': self.scheduled_table['dec (m)'][i],
                          'dec (s)': self.scheduled_table['dec (s)'][i],
                          'configuration':
-                             self.scheduled_table['configuration'][i]},
-                        ignore_index=True)
+                             self.scheduled_table['configuration'][i]}])
+                    end_scheduled_table = pd.concat([end_scheduled_table, new_row], ignore_index=True)
+
 
                 if self.SS1_night_blocks['end time (UTC)'][0] >= end_before_cut:
 
@@ -896,7 +922,23 @@ class Schedules:
                 if self.SS1_night_blocks['start time (UTC)'][0] >= end_before_cut:
                     print(Fore.GREEN + 'INFO: ' + Fore.BLACK + ' situation 10, no change made to initial schedule')
 
-            end_scheduled_table = end_scheduled_table.append({'target': self.SS1_night_blocks['target'][0],
+            # end_scheduled_table = end_scheduled_table.append({'target': self.SS1_night_blocks['target'][0],
+            #                                                   'start time (UTC)':
+            #                                                       self.SS1_night_blocks['start time (UTC)'][0],
+            #                                                   'end time (UTC)':
+            #                                                       self.SS1_night_blocks['end time (UTC)'][0],
+            #                                                   'duration (minutes)':
+            #                                                       self.SS1_night_blocks['duration (minutes)'][0],
+            #                                                   'ra (h)': self.SS1_night_blocks['ra (h)'][0],
+            #                                                   'ra (m)': self.SS1_night_blocks['ra (m)'][0],
+            #                                                   'ra (s)': self.SS1_night_blocks['ra (s)'][0],
+            #                                                   'dec (d)': self.SS1_night_blocks['dec (d)'][0],
+            #                                                   'dec (m)': self.SS1_night_blocks['dec (m)'][0],
+            #                                                   'dec (s)': self.SS1_night_blocks['dec (s)'][0],
+            #                                                   'configuration':
+            #                                                       self.SS1_night_blocks['configuration'][0]},
+            #                                                  ignore_index=True)
+            new_row = pd.DataFrame([{'target': self.SS1_night_blocks['target'][0],
                                                               'start time (UTC)':
                                                                   self.SS1_night_blocks['start time (UTC)'][0],
                                                               'end time (UTC)':
@@ -910,9 +952,26 @@ class Schedules:
                                                               'dec (m)': self.SS1_night_blocks['dec (m)'][0],
                                                               'dec (s)': self.SS1_night_blocks['dec (s)'][0],
                                                               'configuration':
-                                                                  self.SS1_night_blocks['configuration'][0]},
-                                                             ignore_index=True)
-            end_scheduled_table = end_scheduled_table.append({'target': self.scheduled_table['target'][i],
+                                                                  self.SS1_night_blocks['configuration'][0]}])
+            end_scheduled_table = pd.concat([end_scheduled_table, new_row], ignore_index=True)
+
+            # end_scheduled_table = end_scheduled_table.append({'target': self.scheduled_table['target'][i],
+            #                                                   'start time (UTC)':
+            #                                                       self.scheduled_table['start time (UTC)'][i],
+            #                                                   'end time (UTC)':
+            #                                                       self.scheduled_table['end time (UTC)'][i],
+            #                                                   'duration (minutes)':
+            #                                                       self.scheduled_table['duration (minutes)'][i],
+            #                                                   'ra (h)': self.scheduled_table['ra (h)'][i],
+            #                                                   'ra (m)': self.scheduled_table['ra (m)'][i],
+            #                                                   'ra (s)': self.scheduled_table['ra (s)'][i],
+            #                                                   'dec (d)': self.scheduled_table['dec (d)'][i],
+            #                                                   'dec (m)': self.scheduled_table['dec (m)'][i],
+            #                                                   'dec (s)': self.scheduled_table['dec (s)'][i],
+            #                                                   'configuration':
+            #                                                       self.scheduled_table['configuration'][i]},
+            #                                                  ignore_index=True)
+            new_row = pd.DataFrame([{'target': self.scheduled_table['target'][i],
                                                               'start time (UTC)':
                                                                   self.scheduled_table['start time (UTC)'][i],
                                                               'end time (UTC)':
@@ -926,8 +985,8 @@ class Schedules:
                                                               'dec (m)': self.scheduled_table['dec (m)'][i],
                                                               'dec (s)': self.scheduled_table['dec (s)'][i],
                                                               'configuration':
-                                                                  self.scheduled_table['configuration'][i]},
-                                                             ignore_index=True)
+                                                                  self.scheduled_table['configuration'][i]}])
+            end_scheduled_table = pd.concat([end_scheduled_table, new_row], ignore_index=True)
 
         end_scheduled_table = Table.from_pandas(end_scheduled_table)
         end_scheduled_table = unique(end_scheduled_table, keys='target')

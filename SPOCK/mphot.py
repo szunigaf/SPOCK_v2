@@ -33,7 +33,7 @@ def interpolate_dfs(index, *data):
         dat = dat[~dat.index.duplicated(keep='first')]
         df = pd.concat([df, dat], axis=1)
     df = df.interpolate('index').reindex(index)
-    df = df.drop('tmp', 1)
+    df = df.drop('tmp', axis=1)
 
     return df
 

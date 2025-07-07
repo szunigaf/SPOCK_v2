@@ -610,18 +610,20 @@ def make_astra_schedule_file(day, nb_days, telescope):
         texp += [0, 15, 30, 60, 120]
         texp = list(np.sort(np.unique(texp)))
         if (telescope == "Callisto"):
-            calibration_row = pd.Series({"device_type": "Camera",	"device_name": "camera_"+str(telescope).replace("-",""),
+            calibration_row = pd.DataFrame([{"device_type": "Camera",	"device_name": "camera_"+str(telescope).replace("-",""),
                                  "action_type": "calibration",	"action_value": {"exptime":texp, 'n': [10]*len(texp), 'filter':'Dark'},
                                  "start_time": (location.sun_rise_time(t, which='next')-10*u.min+ 1*u.min).iso,
-                                         "end_time": (location.sun_rise_time(t, which='next')+45*u.min).iso})
+                                         "end_time": (location.sun_rise_time(t, which='next')+45*u.min).iso}])
         else:
-            calibration_row = pd.Series(
+            calibration_row = pd.DataFrame([
                 {"device_type": "Camera", "device_name": "camera_" + str(telescope).replace("-", ""),
                  "action_type": "calibration",
                  "action_value": {"exptime": texp, 'n': [10] * len(texp), 'filter': 'I+z'},
                  "start_time": (location.sun_rise_time(t, which='next') - 10 * u.min + 1 * u.min).iso,
-                 "end_time": (location.sun_rise_time(t, which='next') + 45 * u.min).iso})
-        df = df.append(calibration_row, ignore_index=True)
+                 "end_time": (location.sun_rise_time(t, which='next') + 45 * u.min).iso}])
+        # Add calibration row to the dataframe
+        df = pd.concat([df, calibration_row], ignore_index=True)
+        #df = df.append(calibration_row, ignore_index=True)
         #To .csv file
         df.to_csv(path_spock + '/DATABASE/' + str(telescope) + "/Astra/" +
                   str(telescope) + '_' + str(t_now) + '.csv', index=None)

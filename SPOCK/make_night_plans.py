@@ -139,7 +139,7 @@ def dome_rotation(day_of_night, telescope):
                                             dec=coords_dome_rotation.icrs.dec.value * u.degree),
                              name='dome_rot')
 
-        if telescope == "Callisto_SPIRIT":
+        if (telescope == "Callisto"):
             scheduled_table.add_row([target.name, start_dome_rot.iso, end_dome_rot.iso,
                                      dur_dome_rotation * 24 * 60,
                                      target.coord.ra.hms[0],
@@ -194,7 +194,7 @@ def dome_rotation(day_of_night, telescope):
                                             dec=coords_dome_rotation.icrs.dec.value * u.degree),
                              name='dome_rot')
 
-        if telescope == "Callisto_SPIRIT":
+        if (telescope == "Callisto"):
             scheduled_table.add_row([target.name, start_dome_rot.iso, end_dome_rot.iso,
                                      dur_dome_rotation * 24 * 60,
                                      target.coord.ra.hms[0],
@@ -555,7 +555,11 @@ def make_astra_schedule_file(day, nb_days, telescope):
         else:
             nb_flats = 15
         if (telescope == "Callisto"):
-            filt_evening.remove('I+z')
+            try:
+                filt_evening.remove('I+z')
+            except ValueError:
+                (Fore.GREEN + 'INFO: ' + Fore.BLACK + " No I+z to discard for Callisto's Astra plans ")
+                pass
         flats_row_evening = pd.Series({"device_type": "Camera",	"device_name": "camera_"+str(telescope).replace("-",""),
                              "action_type": "flats",
                              "action_value": {"filter": filt_evening, 'n': [nb_flats]*len(filt_evening)},
@@ -592,7 +596,11 @@ def make_astra_schedule_file(day, nb_days, telescope):
 
         filt_morning = custom_sort(my_array, my_custom_order_morning)
         if (telescope == "Callisto"):
-            filt_morning.remove('I+z')
+            try:
+                filt_evening.remove('I+z')
+            except ValueError:
+                (Fore.GREEN + 'INFO: ' + Fore.BLACK + " No I+z to discard for Callisto's Astra plans ")
+                pass
         flats_row_morning = pd.Series({"device_type": "Camera",	"device_name": "camera_"+str(telescope).replace("-",""),
                              "action_type": "flats",
                                        "action_value": {"filter": filt_morning, 'n': [nb_flats]*len(filt_morning)},

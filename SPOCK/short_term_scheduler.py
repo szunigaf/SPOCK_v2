@@ -748,6 +748,8 @@ class Schedules:
             self.SS1_night_blocks['target'][0]
         except TypeError:
             sys.exit(Fore.RED + 'ERROR:  ' + Fore.BLACK + ' No block to insert ')
+        except IndexError:
+            sys.exit(Fore.RED + 'ERROR:  ' + Fore.BLACK + ' No block to insert, it could be that the moon is too close. ')
         if self.SS1_night_blocks['target'][0] in self.scheduled_table['target']:
             sys.exit(Fore.RED + 'ERROR:  ' + Fore.BLACK + ' This target is already scheduled this day')
         for i in range(len(self.scheduled_table['target'])):

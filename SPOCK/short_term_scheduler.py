@@ -30,7 +30,7 @@ import sys
 import shutil
 import SPOCK.ETC as ETC
 from SPOCK import user_portal, pwd_portal, pwd_appcs, path_spock, path_credential_json, target_list_from_stargate_path
-import SPOCK.mphot as mphot
+import SPOCK.mphot_local as mphot_local
 from requests.exceptions import ConnectionError
 
 scope = ['https://spreadsheets.google.com/feeds',
@@ -1163,7 +1163,7 @@ class Schedules:
 
             # generates a SR, saved locally as 'name1_instrumentSR.csv'
             SRFile2 = path_spock + '/SPOCK/files_ETC/SPIRIT/datafiles/SRs/' + name2 + '_instrumentSR.csv'
-            mphot.generateSR(efficiencyFile2, filterFile2, SRFile2)
+            mphot_local.generateSR(efficiencyFile2, filterFile2, SRFile2)
             props_sky = {
                 "pwv": 2.5,  # PWV [mm]
                 "airmass": 1.1,  # Airmass
@@ -1185,7 +1185,7 @@ class Schedules:
 
             print("INFO STAR SPIRIT: ", target_list["Teff"][i].values,
                                          target_list["distance"][i].values)
-            spirit = mphot.get_precision(props_callisto, props_sky, target_list["Teff"][i].values[0],
+            spirit = mphot_local.get_precision(props_callisto, props_sky, target_list["Teff"][i].values[0],
                                          target_list["distance"][i].values[0], override=False, mapping=True)
 
             texp = int(spirit['components']['t [s]'][0])

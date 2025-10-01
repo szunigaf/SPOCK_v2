@@ -30,13 +30,24 @@ target_table_spc_follow_up = dataframe.rename(columns={"sp_id": "Sp_ID", "gaia_d
                                                             "dec_err": "DEC_err", "ra_err": "RA_err"})
 target_table_spc_follow_up['W'] /= 24
 target_table_spc_follow_up['W_err'] /= 24
+
 # Read follow up (planet candidates) list
 worksheet_special = sh.worksheet("Annex_Targets_V2-STARS")
-dataframe = pd.DataFrame(worksheet_special.get_all_records(expected_headers= [
+values = worksheet_special.get_all_values()
+custom_headers= [
     "SPECULOOS", "Annex_Prog", "V_mag", "Alias", "Note", "Active", 
     "Next Obs", "spc", "soi", "twomass", "gaia", "wise", "ra", "dec", 
     "ra_err", "dec_err", "Filter_spc", "Filter_trap", "texp_spc", 
-    "texp_trap", "mag_j", "mag_j_err", "SpT", "e_Spt", "Teff", "distance"  ]))
+    "texp_trap", "mag_j", "mag_j_err", "SpT", "e_Spt", "Teff", "distance"  ]
+# Create full DataFrame with all columns
+full_headers = values[0]
+data = values[1:]
+# Create full DataFrame with all columns
+df_full = pd.DataFrame(data, columns=full_headers)
+# Subset to only the columns you want
+dataframe = df_full[custom_headers]
+
+#dataframe = pd.DataFrame(values[1:], columns=custom_headers)
 target_table_spc_special = dataframe.rename(columns={"spc": "Sp_ID", "gaia": "Gaia_ID", "dec": "DEC",
                                                   "ra": "RA", "dec_err": "DEC_err", "ra_err": "RA_err",
                                                   "mag_j": "J", "V_mag": "V"})

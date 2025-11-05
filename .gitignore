@@ -190,3 +190,5 @@ vendor/
 _site/
 
 .DS_Store
+
+Notebooks/

@@ -1313,7 +1313,7 @@ class Schedules:
                     < self.observatory.target_rise_time(self.date_range[0] + t,
                                                         self.targets[self.idx_first_target],
                                                         which='nearest',
-                                                        horizon=self.Altitude_constraint * u.deg):
+                                                        horizon=self.Altitude_constraint * u.deg):  # typically happens for Saint-Ex as the night start in the middle of a UTS time night
 
                 set_first_target = self.observatory.target_set_time(self.date_range[0] + t + 1,
                                                                     self.targets[self.idx_first_target],
@@ -1350,7 +1350,8 @@ class Schedules:
                                                                    self.targets[self.index_prio[-i]],
                                                                    which='nearest',
                                                                    horizon=self.Altitude_constraint * u.deg)
-            else:
+            if (self.telescope == 'Io') or (self.telescope == 'Europa') or (self.telescope == 'Ganymede') or \
+                (self.telescope == 'Callisto') or (self.telescope == 'Artemis'):
                 set_target = self.observatory.target_set_time(self.date_range[0] + t,
                                                               self.targets[self.index_prio[-i]],
                                                               which='next',
@@ -1433,7 +1434,8 @@ class Schedules:
                     self.idx_second_target = self.idx_first_target
                     self.second_target = self.first_target
                     break
-            else:
+            if (self.telescope == 'Io') or (self.telescope == 'Europa') or (self.telescope == 'Ganymede') or \
+                (self.telescope == 'Callisto') or (self.telescope == 'Artemis'):
                 if self.first_target['set or rise'] == 'rise':
                     if self.priority['set or rise'][self.index_prio[-i]] == 'set':
                         if (rise_target < start_between_civil_nautical) and \
@@ -1483,42 +1485,133 @@ class Schedules:
 
     def table_priority_prio(self, day):
 
-        self.priority = Table(names=('priority', 'target name', 'set or rise', 'alt set start',
-                                     'alt rise start', 'alt set end', 'alt rise end'),
-                              dtype=('f4', 'S11', 'S4', 'f4', 'f4', 'f4', 'f4'))
+        self.priority =  pd.DataFrame(columns=['priority', 'target_name', 'set', 'rise', 'both', 'moon', 'program',
+                                               'SNR_ANDOR', 'SNR_SPIRIT', 'boost', 'to_do', 'started', 'completed'
+                           #'alt set start', 'alt rise start',
+                           #'alt set end', 'alt rise end',
+                           ])
         try:
-            self.observability_seclection(day)  # observability selection
+            self.init_priority_table(day)  # initialise priority table
         except ValueError:
             sys.exit(Fore.RED + 'ERROR:  ' + Fore.BLACK + ' This is a known error, please re-run')
 
-        if (self.telescope == 'Io') or (self.telescope == 'Europa') or (self.telescope == 'Saint-Ex') or \
-                (self.telescope == 'Artemis') or (self.telescope == 'Ganymede') or (self.telescope == 'Callisto') or \
-                (self.telescope == 'TS_La_Silla') or (self.telescope == 'TN_Oukaimeden'):
+        idx_on_going = (self.target_table_spc['nb_hours_surved'] > 0) & (self.target_table_spc['nb_hours_surved'] < 200)
+        idx_to_be_done = self.target_table_spc['nb_hours_surved'] == 0
+        idx_done = self.target_table_spc['nb_hours_surved'] > 200
+        
+        self.priority['started'][idx_on_going] = True
+        self.priority['to_do'][idx_to_be_done] = True
+        self.priority['completed'][idx_done] = True
 
-            idx_on_going = np.where(((self.target_table_spc['nb_hours_surved'] > 0) &
-                                     (self.target_table_spc['nb_hours_surved'] < 190)))
-            idx_to_be_done = np.where((self.target_table_spc['nb_hours_surved'] == 0))
-            idx_done = np.where((self.target_table_spc['nb_hours_surved'] > 200))
-            idx_prog0 = np.where((self.target_table_spc['Program'] == 0))
-            idx_prog1 = np.where((self.target_table_spc['Program'] == 1))
-            idx_prog2 = np.where((self.target_table_spc['Program'] == 2))
-            idx_prog3 = np.where((self.target_table_spc['Program'] == 3))
-            idx_prog5 = np.where((self.target_table_spc['Program'] == 5))
-            self.priority['priority'][idx_prog0] *= 0.1
+        # idx_prog0 = np.where((self.target_table_spc['Program'] == 0))
+        # idx_prog1 = np.where((self.target_table_spc['Program'] == 1))
+        # idx_prog2 = np.where((self.target_table_spc['Program'] == 2))
+        # idx_prog3 = np.where((self.target_table_spc['Program'] == 3))
+        # idx_prog5 = np.where((self.target_table_spc['Program'] == 5))
+        # self.priority['priority'][idx_prog0] *= 0.1
 
-            if self.telescope == "Callisto":
-                self.priority['priority'][idx_prog1] *= 10 * self.target_table_spc['SNR_SPIRIT'][idx_prog1] ** 15
-            else:
-                self.priority['priority'][idx_prog1] *= 10 * self.target_table_spc['SNR_JWST_HZ_tr'][idx_prog1] ** 15
+        # set priority in terms of Program number
+        if self.telescope == "Callisto":
+            self.priority['priority'][self.priority['Program'] == 1] = self.target_table_spc['SNR_SPIRIT'][self.priority['Program'] == 1] * 10
+            self.priority['priority'][self.priority['Program'] == 3] = self.target_table_spc['SNR_SPIRIT'][self.priority['Program'] == 3] * 5
 
-            self.priority['priority'][idx_prog2] *= 10 * self.target_table_spc['SNR_TESS_temp'][idx_prog2] ** 5
-            self.priority['priority'][idx_prog3] *= 10 * self.target_table_spc['SNR_Spec_temp'][idx_prog3] ** 0
-            self.priority['priority'][idx_on_going] *= \
-                10 ** (4 + 1 / (1 + 200 - self.target_table_spc['nb_hours_surved'][idx_on_going]))
-            self.priority['priority'][idx_to_be_done] *= \
-                10 ** (1 / (1 + 200 - self.target_table_spc['nb_hours_surved'][idx_to_be_done]))
-            self.priority['priority'][idx_prog5] *= -1 #10 * self.target_table_spc['SNR_Spec_temp'][idx_prog5] * 0
-            self.priority['priority'][idx_done] = -1
+        else:
+            self.priority['priority'][self.priority['Program'] == 1] = self.target_table_spc['SNR_ANDOR'][self.priority['Program'] == 1] * 10
+            self.priority['priority'][self.priority['Program'] == 3] = self.target_table_spc['SNR_ANDOR'][self.priority['Program'] == 3] * 5
+        
+        # self.priority['priority'][idx_prog3] *= 10 * self.target_table_spc['SNR_Spec_temp'][idx_prog3] ** 0
+        # self.priority['priority'][idx_on_going] *= \
+        #     10 ** (4 + 1 / (1 + 200 - self.target_table_spc['nb_hours_surved'][idx_on_going]))
+        # self.priority['priority'][idx_to_be_done] *= \
+        #     10 ** (1 / (1 + 200 - self.target_table_spc['nb_hours_surved'][idx_to_be_done]))
+        # self.priority['priority'][idx_prog5] *= -1 #10 * self.target_table_spc['SNR_Spec_temp'][idx_prog5] * 0
+        # self.priority['priority'][idx_done] = -1
+
+        # define if target is rising or setting or both during the night
+        nb_reso_grid = 30
+        horizon_for_set_and_rise = -12 * u.degree # degrees
+
+        if self.telescope == 'Saint-Ex':
+            start_night_start_saint_ex = Time(self.observatory.sun_set_time(day, which='next',
+                                                                            horizon=-8.19 * u.degree).iso)
+            if start_night_start_saint_ex < day:
+                sys.exit('ERROR: Problem with start/end of night  on Saint-Ex !!')
+            delta_midnight_start = np.linspace(0, self.observatory.sun_rise_time(day, which='next',
+                                                                                    horizon=-8.19 * u.degree).jd -
+                                                self.observatory.sun_set_time(day, which='nearest',
+                                                                                horizon=-8.19 * u.degree).jd,
+                                                nb_reso_grid) * u.day  # Delta at the first day of schedule
+            frame_start = AltAz(obstime=start_night_start_saint_ex + delta_midnight_start,
+                                location=self.observatory.location)
+
+            start_night_end_saint_ex = Time(self.observatory.sun_set_time(day + self.date_range_in_days,
+                                                                            which='nearest',
+                                                                            horizon=-8.19 * u.degree).iso)
+            delta_midnight_end = np.linspace(0, self.observatory.sun_rise_time(day + self.date_range_in_days,
+                                                                                which='next',
+                                                                                horizon=-8.19 * u.degree).jd
+                                                - self.observatory.sun_set_time(day + self.date_range_in_days,
+                                                                                which='nearest',
+                                                                                horizon=-8.19 * u.degree).jd,
+                                                nb_reso_grid) * u.day  # Delta at the first day of schedule
+            frame_end = AltAz(obstime=start_night_end_saint_ex + delta_midnight_end,
+                                location=self.observatory.location)
+            
+        # if self.telescope == "Artemis":
+        #         start_night_start = Time(self.observatory.sun_set_time(day, which='next',
+        #                                                                 horizon=-12 * u.degree).iso)
+        #         delta_midnight_start = np.linspace(0, self.observatory.sun_rise_time(day, which='next',
+        #                                                                                 horizon=-12 * u.degree).jd -
+        #                                             self.observatory.sun_set_time(day, which='nearest',
+        #                                                                             horizon=-12 * u.degree).jd,
+        #                                             nb_reso_grid) * u.day  # Delta at the first day of schedule
+        #         frame_start = AltAz(obstime=start_night_start + delta_midnight_start,
+        #                             location=self.observatory.location)
+        #         start_night_end = Time(self.observatory.sun_set_time(day + self.date_range_in_days,
+        #                                                                 which='nearest', horizon=-12 * u.degree).iso)
+        #         delta_midnight_end = np.linspace(0, self.observatory.sun_rise_time(day + self.date_range_in_days,
+        #                                                                             which='next',
+        #                                                                             horizon=-12 * u.degree).jd
+        #                                             - self.observatory.sun_set_time(day + self.date_range_in_days,
+        #                                                                             which='nearest',
+        #                                                                             horizon=-12 * u.degree).jd,
+        #                                             nb_reso_grid) * u.day  # Delta at the first day of schedule
+        #         frame_end = AltAz(obstime=start_night_end + delta_midnight_end, location=self.observatory.location)
+
+        else:
+            start_night_start = Time(self.observatory.sun_set_time(day, which='next',
+                                                                        horizon=horizon_for_set_and_rise).iso)
+            delta_midnight_start = np.linspace(0, self.observatory.sun_rise_time(day, which='next',
+                                                                                        horizon=horizon_for_set_and_rise).jd -
+                                                    self.observatory.sun_set_time(day, which='nearest',
+                                                                                    horizon=horizon_for_set_and_rise).jd,
+                                                    nb_reso_grid) * u.day  # Delta at the first day of schedule
+            frame_start = AltAz(obstime=start_night_start + delta_midnight_start,
+                                location=self.observatory.location)
+
+            start_night_end = Time(self.observatory.sun_set_time(day + self.date_range_in_days,
+                                                                        which='nearest', horizon=horizon_for_set_and_rise).iso)
+            delta_midnight_end = np.linspace(0, self.observatory.sun_rise_time(day + self.date_range_in_days,
+                                                                                    which='next',
+                                                                                    horizon=horizon_for_set_and_rise).jd
+                                                    - self.observatory.sun_set_time(day + self.date_range_in_days,
+                                                                                    which='nearest',
+                                                                                    horizon=horizon_for_set_and_rise).jd,
+                                                    nb_reso_grid) * u.day  # Delta at the first day of schedule
+            frame_end = AltAz(obstime=start_night_end + delta_midnight_end, location=self.observatory.location)
+
+        
+
+        target_alt = [[target.coord.transform_to(frame_start).alt,
+                        target.coord.transform_to(frame_end).alt] for target in self.targets]  # This line takes time
+        target_alt_start = np.asarray(target_alt)[:, 0, :]
+        target_alt_end = np.asarray(target_alt)[:, 1, :]
+        
+        max_target_alt = list(map(max, target_alt_start))
+        alt_set_start = list(map(first_elem_list, target_alt_start[:]))
+        alt_rise_start = list(map(last_elem_list, target_alt_start[:]))
+        alt_set_end = list(map(first_elem_list, target_alt_end[:]))
+        alt_rise_end = list(map(last_elem_list, target_alt_end[:]))
             
 
         set_targets_index = (self.priority['alt set start'] > self.Altitude_constraint) & \
@@ -1597,124 +1690,147 @@ class Schedules:
 
         # return self.index_prio, self.priority, self.priority_ranked
 
-    def observability_seclection(self, day):
+    def init_priority_table(self, day):
         day_fmt = Time(day.iso, out_subfmt='date').iso
-        if os.path.exists(path_spock + '/SPOCK_files/Ranking_months_' + str(self.observatory.name) + '_' +
-                          str(day_fmt) + '_ndays_' + str(self.date_range_in_days) + '_' + str(
-            len(self.targets)) + '.csv'):
-            name_file = path_spock + '/SPOCK_files/Ranking_months_' + str(self.observatory.name) + '_' + \
-                        str(day_fmt) + '_ndays_' + str(self.date_range_in_days) + '_' + str(
-                len(self.targets)) + '.csv'
+        if os.path.exists(path_spock + '/SPOCK_files/Ranking_months_' + str(self.observatory.name) 
+                        #   + '_' + str(day_fmt) + '_ndays_' + str(self.date_range_in_days) + '_' + str(len(self.targets)) 
+                          + '.csv'):
+            name_file = path_spock + '/SPOCK_files/Ranking_months_' + str(self.observatory.name) 
+            # + '_' +  str(day_fmt) + '_ndays_' + str(self.date_range_in_days) + '_' + str(
+            #     len(self.targets)) 
+            + '.csv'
             dataframe_ranking_months = pd.read_csv(name_file, delimiter=',')
             self.priority = Table.from_pandas(dataframe_ranking_months)
         else:
-            nb_reso_grid = 30
-            if self.telescope == 'Saint-Ex':
-                start_night_start_saint_ex = Time(self.observatory.sun_set_time(day, which='next',
-                                                                                horizon=-8.19 * u.degree).iso)
-                if start_night_start_saint_ex < day:
-                    sys.exit('ERROR: Problem with start/end of night  on Saint-Ex !!')
-                delta_midnight_start = np.linspace(0, self.observatory.sun_rise_time(day, which='next',
-                                                                                     horizon=-8.19 * u.degree).jd -
-                                                   self.observatory.sun_set_time(day, which='nearest',
-                                                                                 horizon=-8.19 * u.degree).jd,
-                                                   nb_reso_grid) * u.day  # Delta at the first day of schedule
-                frame_start = AltAz(obstime=start_night_start_saint_ex + delta_midnight_start,
-                                    location=self.observatory.location)
+            # nb_reso_grid = 30
+            # if self.telescope == 'Saint-Ex':
+            #     start_night_start_saint_ex = Time(self.observatory.sun_set_time(day, which='next',
+            #                                                                     horizon=-8.19 * u.degree).iso)
+            #     if start_night_start_saint_ex < day:
+            #         sys.exit('ERROR: Problem with start/end of night  on Saint-Ex !!')
+            #     delta_midnight_start = np.linspace(0, self.observatory.sun_rise_time(day, which='next',
+            #                                                                          horizon=-8.19 * u.degree).jd -
+            #                                        self.observatory.sun_set_time(day, which='nearest',
+            #                                                                      horizon=-8.19 * u.degree).jd,
+            #                                        nb_reso_grid) * u.day  # Delta at the first day of schedule
+            #     frame_start = AltAz(obstime=start_night_start_saint_ex + delta_midnight_start,
+            #                         location=self.observatory.location)
 
-                start_night_end_saint_ex = Time(self.observatory.sun_set_time(day + self.date_range_in_days,
-                                                                              which='nearest',
-                                                                              horizon=-8.19 * u.degree).iso)
-                delta_midnight_end = np.linspace(0, self.observatory.sun_rise_time(day + self.date_range_in_days,
-                                                                                   which='next',
-                                                                                   horizon=-8.19 * u.degree).jd
-                                                 - self.observatory.sun_set_time(day + self.date_range_in_days,
-                                                                                 which='nearest',
-                                                                                 horizon=-8.19 * u.degree).jd,
-                                                 nb_reso_grid) * u.day  # Delta at the first day of schedule
-                frame_end = AltAz(obstime=start_night_end_saint_ex + delta_midnight_end,
-                                  location=self.observatory.location)
-            else:
-                start_night_start = self.observatory.twilight_evening_nautical(day, which='nearest')  # * u.hour
-                delta_midnight_start = np.linspace(0, self.observatory.twilight_morning_nautical(day, which='next').jd -
-                                                   self.observatory.twilight_evening_nautical(day, which='nearest').jd,
-                                                   nb_reso_grid) * u.day  # Delta at the first day of schedule
-                frame_start = AltAz(obstime=start_night_start + delta_midnight_start,
-                                    location=self.observatory.location)
+            #     start_night_end_saint_ex = Time(self.observatory.sun_set_time(day + self.date_range_in_days,
+            #                                                                   which='nearest',
+            #                                                                   horizon=-8.19 * u.degree).iso)
+            #     delta_midnight_end = np.linspace(0, self.observatory.sun_rise_time(day + self.date_range_in_days,
+            #                                                                        which='next',
+            #                                                                        horizon=-8.19 * u.degree).jd
+            #                                      - self.observatory.sun_set_time(day + self.date_range_in_days,
+            #                                                                      which='nearest',
+            #                                                                      horizon=-8.19 * u.degree).jd,
+            #                                      nb_reso_grid) * u.day  # Delta at the first day of schedule
+            #     frame_end = AltAz(obstime=start_night_end_saint_ex + delta_midnight_end,
+            #                       location=self.observatory.location)
+            # else:
+            #     start_night_start = self.observatory.twilight_evening_nautical(day, which='nearest')  # * u.hour
+            #     delta_midnight_start = np.linspace(0, self.observatory.twilight_morning_nautical(day, which='next').jd -
+            #                                        self.observatory.twilight_evening_nautical(day, which='nearest').jd,
+            #                                        nb_reso_grid) * u.day  # Delta at the first day of schedule
+            #     frame_start = AltAz(obstime=start_night_start + delta_midnight_start,
+            #                         location=self.observatory.location)
 
-                start_night_end = self.observatory.twilight_evening_nautical(day + self.date_range_in_days,
-                                                                             which='nearest')  # * u.hour
-                delta_midnight_end = np.linspace(0, self.observatory.twilight_morning_nautical(day +
-                                                                                               self.date_range_in_days,
-                                                                                               which='next').jd
-                                                 - self.observatory.twilight_evening_nautical(day +
-                                                                                              self.date_range_in_days,
-                                                                                              which='nearest').jd,
-                                                 nb_reso_grid) * u.day  # Delta at the first day of schedule
-                frame_end = AltAz(obstime=start_night_end + delta_midnight_end, location=self.observatory.location)
+            #     start_night_end = self.observatory.twilight_evening_nautical(day + self.date_range_in_days,
+            #                                                                  which='nearest')  # * u.hour
+            #     delta_midnight_end = np.linspace(0, self.observatory.twilight_morning_nautical(day +
+            #                                                                                    self.date_range_in_days,
+            #                                                                                    which='next').jd
+            #                                      - self.observatory.twilight_evening_nautical(day +
+            #                                                                                   self.date_range_in_days,
+            #                                                                                   which='nearest').jd,
+            #                                      nb_reso_grid) * u.day  # Delta at the first day of schedule
+            #     frame_end = AltAz(obstime=start_night_end + delta_midnight_end, location=self.observatory.location)
 
-                if self.telescope == "Artemis":
-                    start_night_start = Time(self.observatory.sun_set_time(day, which='next',
-                                                                           horizon=-12 * u.degree).iso)
-                    delta_midnight_start = np.linspace(0, self.observatory.sun_rise_time(day, which='next',
-                                                                                         horizon=-12 * u.degree).jd -
-                                                       self.observatory.sun_set_time(day, which='nearest',
-                                                                                     horizon=-12 * u.degree).jd,
-                                                       nb_reso_grid) * u.day  # Delta at the first day of schedule
-                    frame_start = AltAz(obstime=start_night_start + delta_midnight_start,
-                                        location=self.observatory.location)
-                    start_night_end = Time(self.observatory.sun_set_time(day + self.date_range_in_days,
-                                                                         which='nearest', horizon=-12 * u.degree).iso)
-                    delta_midnight_end = np.linspace(0, self.observatory.sun_rise_time(day + self.date_range_in_days,
-                                                                                       which='next',
-                                                                                       horizon=-12 * u.degree).jd
-                                                     - self.observatory.sun_set_time(day + self.date_range_in_days,
-                                                                                     which='nearest',
-                                                                                     horizon=-12 * u.degree).jd,
-                                                     nb_reso_grid) * u.day  # Delta at the first day of schedule
-                    frame_end = AltAz(obstime=start_night_end + delta_midnight_end, location=self.observatory.location)
+            #     if self.telescope == "Artemis":
+            #         start_night_start = Time(self.observatory.sun_set_time(day, which='next',
+            #                                                                horizon=-12 * u.degree).iso)
+            #         delta_midnight_start = np.linspace(0, self.observatory.sun_rise_time(day, which='next',
+            #                                                                              horizon=-12 * u.degree).jd -
+            #                                            self.observatory.sun_set_time(day, which='nearest',
+            #                                                                          horizon=-12 * u.degree).jd,
+            #                                            nb_reso_grid) * u.day  # Delta at the first day of schedule
+            #         frame_start = AltAz(obstime=start_night_start + delta_midnight_start,
+            #                             location=self.observatory.location)
+            #         start_night_end = Time(self.observatory.sun_set_time(day + self.date_range_in_days,
+            #                                                              which='nearest', horizon=-12 * u.degree).iso)
+            #         delta_midnight_end = np.linspace(0, self.observatory.sun_rise_time(day + self.date_range_in_days,
+            #                                                                            which='next',
+            #                                                                            horizon=-12 * u.degree).jd
+            #                                          - self.observatory.sun_set_time(day + self.date_range_in_days,
+            #                                                                          which='nearest',
+            #                                                                          horizon=-12 * u.degree).jd,
+            #                                          nb_reso_grid) * u.day  # Delta at the first day of schedule
+            #         frame_end = AltAz(obstime=start_night_end + delta_midnight_end, location=self.observatory.location)
 
-            target_alt = [[target.coord.transform_to(frame_start).alt,
-                           target.coord.transform_to(frame_end).alt] for target in self.targets]  # This line takes time
-            target_alt_start = np.asarray(target_alt)[:, 0, :]
-            target_alt_end = np.asarray(target_alt)[:, 1, :]
+            # target_alt = [[target.coord.transform_to(frame_start).alt,
+            #                target.coord.transform_to(frame_end).alt] for target in self.targets]  # This line takes time
+            # target_alt_start = np.asarray(target_alt)[:, 0, :]
+            # target_alt_end = np.asarray(target_alt)[:, 1, :]
             #
-            max_target_alt = list(map(max, target_alt_start))
-            alt_set_start = list(map(first_elem_list, target_alt_start[:]))
-            alt_rise_start = list(map(last_elem_list, target_alt_start[:]))
-            alt_set_end = list(map(first_elem_list, target_alt_end[:]))
-            alt_rise_end = list(map(last_elem_list, target_alt_end[:]))
-            priority_value = [-0.5] * len(self.targets)
-            set_or_rise = ['None'] * len(self.targets)
-            df = pd.DataFrame({'priority': priority_value, 'set or rise': set_or_rise, 'alt set start': alt_set_start,
-                               'alt rise start': alt_rise_start, 'alt set end': alt_set_end,
-                               'alt rise end': alt_rise_end, 'max_alt': max_target_alt,
-                               'Sp_ID': self.target_table_spc['Sp_ID']})
-            self.priority = Table.from_pandas(df)
-            month_opt = Table([[], [], [], [], []], names=['months', 'months_2nd', 'months_3rd',
-                                                           'months_4th', 'months_5th'])
-            [month_opt.add_row(month_option(target, self.reverse_df1)) for target in
-             self.target_table_spc['Sp_ID']]  # This line takes times
-            idx_1rst_opt_monthobs = np.where((month_opt['months'] == self.months_obs))
-            idx_2nd_opt_monthobs = np.where((month_opt['months_2nd'] == self.months_obs))
-            idx_3rd_opt_monthobs = np.where((month_opt['months_3rd'] == self.months_obs))
-            idx_4th_opt_monthobs = np.where((month_opt['months_4th'] == self.months_obs))
-            idx_5th_opt_monthobs = np.where((month_opt['months_5th'] == self.months_obs))
-            self.priority['priority'][idx_1rst_opt_monthobs] = \
-                (self.priority['max_alt'][idx_1rst_opt_monthobs] - 30) * 10 ** 4
-            self.priority['priority'][idx_2nd_opt_monthobs] = \
-                (self.priority['max_alt'][idx_2nd_opt_monthobs] - 30) * 10 ** 3
-            self.priority['priority'][idx_3rd_opt_monthobs] = \
-                (self.priority['max_alt'][idx_3rd_opt_monthobs] - 30) * 10 ** 2
-            self.priority['priority'][idx_4th_opt_monthobs] = \
-                (self.priority['max_alt'][idx_4th_opt_monthobs] - 30) * 10 ** 1
-            self.priority['priority'][idx_5th_opt_monthobs] = \
-                (self.priority['max_alt'][idx_5th_opt_monthobs] - 30) * 10 ** 0
+            # max_target_alt = list(map(max, target_alt_start))
+            # alt_set_start = list(map(first_elem_list, target_alt_start[:]))
+            # alt_rise_start = list(map(last_elem_list, target_alt_start[:]))
+            # alt_set_end = list(map(first_elem_list, target_alt_end[:]))
+            # alt_rise_end = list(map(last_elem_list, target_alt_end[:]))
+            # priority_value = [-0.5] * len(self.targets)
+            # set_or_rise = ['None'] * len(self.targets)
+            # df = pd.DataFrame({'priority': priority_value, 'set or rise': set_or_rise, 'alt set start': alt_set_start,
+            #                    'alt rise start': alt_rise_start, 'alt set end': alt_set_end,
+            #                    'alt rise end': alt_rise_end, 'max_alt': max_target_alt,
+            #                    'Sp_ID': self.target_table_spc['Sp_ID']})
 
-            dataframe_priority = self.priority.to_pandas()
-            dataframe_priority.to_csv(path_spock + '/SPOCK_files/Ranking_months_' + str(self.observatory.name) +
-                                      '_' + str(day_fmt) + '_ndays_' + str(self.date_range_in_days) + '_' +
-                                      str(len(self.targets)) + '.csv', sep=',', index=False)
+            df_priority = pd.DataFrame({'priority': np.zeros(len(self.targets)),
+                                        'target_name': self.target_table_spc['Sp_ID'],
+                                        'set': np.zeros(len(self.targets), dtype=bool),
+                                        'rise': np.zeros(len(self.targets), dtype=bool),
+                                        'both' : np.zeros(len(self.targets), dtype=bool),
+                                        'moon' : np.zeros(len(self.targets), dtype=bool),
+                                        'program' : self.target_table_spc['Program'],
+                                        'SNR_ANDOR' : self.target_table_spc['SNR_JWST_HZ_tr'],
+                                        'SNR_SPIRIT' : self.target_table_spc['SNR_SPIRIT'],
+                                        'boost' : np.zeros(len(self.targets)),
+                                        'to_do' : np.zeros(len(self.targets), dtype=bool),
+                                        'started' : np.zeros(len(self.targets), dtype=bool),
+                                        'completed' : np.zeros(len(self.targets), dtype=bool)
+                           })
+            self.priority = Table.from_pandas(df_priority)
+
+
+            # df_priority.to_csv(path_spock + '/SPOCK_files/Ranking_months_' + str(self.observatory.name) +
+            #                           '_' + str(day_fmt) 
+            #                         #   + '_ndays_' + str(self.date_range_in_days) + '_' + str(len(self.targets))
+            #                             + '.csv', sep=',', index=False)
+            
+            # month_opt = Table([[], [], [], [], []], names=['months', 'months_2nd', 'months_3rd',
+            #                                                'months_4th', 'months_5th'])
+            # [month_opt.add_row(month_option(target, self.reverse_df1)) for target in
+            #  self.target_table_spc['Sp_ID']]  # This line takes times
+            # idx_1rst_opt_monthobs = np.where((month_opt['months'] == self.months_obs))
+            # idx_2nd_opt_monthobs = np.where((month_opt['months_2nd'] == self.months_obs))
+            # idx_3rd_opt_monthobs = np.where((month_opt['months_3rd'] == self.months_obs))
+            # idx_4th_opt_monthobs = np.where((month_opt['months_4th'] == self.months_obs))
+            # idx_5th_opt_monthobs = np.where((month_opt['months_5th'] == self.months_obs))
+            # self.priority['priority'][idx_1rst_opt_monthobs] = \
+            #     (self.priority['max_alt'][idx_1rst_opt_monthobs] - 30) * 10 ** 4
+            # self.priority['priority'][idx_2nd_opt_monthobs] = \
+            #     (self.priority['max_alt'][idx_2nd_opt_monthobs] - 30) * 10 ** 3
+            # self.priority['priority'][idx_3rd_opt_monthobs] = \
+            #     (self.priority['max_alt'][idx_3rd_opt_monthobs] - 30) * 10 ** 2
+            # self.priority['priority'][idx_4th_opt_monthobs] = \
+            #     (self.priority['max_alt'][idx_4th_opt_monthobs] - 30) * 10 ** 1
+            # self.priority['priority'][idx_5th_opt_monthobs] = \
+            #     (self.priority['max_alt'][idx_5th_opt_monthobs] - 30) * 10 ** 0
+
+            # dataframe_priority = self.priority.to_pandas()
+            # dataframe_priority.to_csv(path_spock + '/SPOCK_files/Ranking_months_' + str(self.observatory.name) +
+            #                           '_' + str(day_fmt) + '_ndays_' + str(self.date_range_in_days) + '_' +
+            #                           str(len(self.targets)) + '.csv', sep=',', index=False)
 
     def shift_hours_observation(self, idx_target):
 

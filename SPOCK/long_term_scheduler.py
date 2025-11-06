@@ -256,7 +256,23 @@ def sso_planned_targets(date_is, telescope):
         except FileNotFoundError:
             print(Fore.YELLOW + 'WARNING: ' + Fore.BLACK + ' No plans in your local file for  ' +
                   telescopes[i] + ' on the ' + str(date_is))
+    #online
+    for i in range(len(telescopes)):
+        nightb_url = "https://speculoos.withastra.io/SPECULOOS/Observations/" + telescope + '/schedule/Archive_night_blocks/night_blocks_' + \
+                     telescope + '_' + str(date_is) + '.txt'
+        nightb = requests.get(nightb_url, auth=(user_portal, pwd_portal))
 
+        if nightb.status_code == 404:
+            sys.exit(Fore.RED + 'ERROR:  ' + Fore.BLACK + ' No plans on the server for this date')
+        else:
+            path_local = path_spock + '/DATABASE/' + telescope + '/Archive_night_blocks/night_blocks_' + telescope + '_' + \
+                 str(date_is) + '.txt'
+            open(path_local, 'wb').write(nightb.content)
+            nb_online = pd.read_csv(path_local, delimiter=' ', index_col=False)     
+            for tar in nb_online['target']:
+                targets_on_sso_telescopes.append(tar)  
+    
+    targets_on_sso_telescopes = list(set(targets_on_sso_telescopes))
     return targets_on_sso_telescopes
 
 
@@ -274,9 +290,11 @@ def sno_planned_targets(date_is):
         list of targets scheduled on this SNO that  day
 
     """
-    telescopes = ['Artemis', 'Saint-Ex']
+    telescopes = ['Artemis']
     targets_on_sno_telescopes = []
-    for i in range(len(telescopes)): # local
+
+    #local
+    for i in range(len(telescopes)): 
         night_block_str = '/night_blocks_' + telescopes[i] + '_' + str(date_is) + '.txt'
         path = path_spock + '/DATABASE/' + telescopes[i] + '/Archive_night_blocks/' + night_block_str
         try:
@@ -286,8 +304,71 @@ def sno_planned_targets(date_is):
         except FileNotFoundError:
             print(Fore.YELLOW + 'WARNING: ' + Fore.BLACK + ' No plans in your local file for  ' +
                   telescopes[i] + ' on the ' + str(date_is))
+            
+    #online
+    for i in range(len(telescopes)):
+        nightb_url = "https://speculoos.withastra.io/SPECULOOS/Observations/" + telescopes[i] + '/schedule/Archive_night_blocks/night_blocks_' + telescopes[i] + '_' + str(date_is) + '.txt'
+        nightb = requests.get(nightb_url, auth=(user_portal, pwd_portal))
+
+        if nightb.status_code == 404:
+            sys.exit(Fore.RED + 'ERROR:  ' + Fore.BLACK + ' No plans on the server for this date')
+        else:
+            path_local = path_spock + '/DATABASE/' + telescopes[i] + '/Archive_night_blocks/night_blocks_' + telescopes[i] + '_' + \
+                 str(date_is) + '.txt'
+            open(path_local, 'wb').write(nightb.content)
+            nb_online = pd.read_csv(path_local, delimiter=' ', index_col=False)     
+            for tar in nb_online['target']:
+                targets_on_sno_telescopes.append(tar)  
+    
+    targets_on_sno_telescopes = list(set(targets_on_sno_telescopes))
     return targets_on_sno_telescopes
 
+def saintex_planned_targets(date_is):
+    """ tell which target are scheduled on SNO on a given day
+
+    Parameters
+    ----------
+    date_is : date
+        date of day in fmt 'yyyy-mm-dd'
+
+    Returns
+    -------
+    list
+        list of targets scheduled on this Saint-Ex that  day
+
+    """
+    telescopes = ['Saint-Ex']
+    targets_on_saintex_telescopes = []
+
+    #local
+    for i in range(len(telescopes)): 
+        night_block_str = '/night_blocks_' + telescopes[i] + '_' + str(date_is) + '.txt'
+        path = path_spock + '/DATABASE/' + telescopes[i] + '/Archive_night_blocks/' + night_block_str
+        try:
+            c = pd.read_csv(path, delimiter=' ', index_col=False)
+            for tar in c['target']:
+                targets_on_saintex_telescopes.append(tar)
+        except FileNotFoundError:
+            print(Fore.YELLOW + 'WARNING: ' + Fore.BLACK + ' No plans in your local file for  ' +
+                  telescopes[i] + ' on the ' + str(date_is))
+            
+    #online
+    for i in range(len(telescopes)):
+        nightb_url = "https://speculoos.withastra.io/SPECULOOS/Observations/" + telescopes[i] + '/schedule/Archive_night_blocks/night_blocks_' + telescopes[i] + '_' + str(date_is) + '.txt'
+        nightb = requests.get(nightb_url, auth=(user_portal, pwd_portal))
+
+        if nightb.status_code == 404:
+            sys.exit(Fore.RED + 'ERROR:  ' + Fore.BLACK + ' No plans on the server for this date')
+        else:
+            path_local = path_spock + '/DATABASE/' + telescopes[i] + '/Archive_night_blocks/night_blocks_' + telescopes[i] + '_' + \
+                 str(date_is) + '.txt'
+            open(path_local, 'wb').write(nightb.content)
+            nb_online = pd.read_csv(path_local, delimiter=' ', index_col=False)     
+            for tar in nb_online['target']:
+                targets_on_saintex_telescopes.append(tar)  
+    
+    targets_on_saintex_telescopes = list(set(targets_on_saintex_telescopes))
+    return targets_on_saintex_telescopes
 
 # def ts_planned_targets(date_is):
 #     """ tell which target are scheduled on TS on a given day
@@ -1204,12 +1285,7 @@ class Schedules:
             day_fmt = Time(date.iso, out_subfmt='date').iso
             observed_targets_SSO += sso_planned_targets(day_fmt, self.telescope)
             observed_targets_SNO += sno_planned_targets(day_fmt)
-            observed_targets_SaintEx += sno_planned_targets(day_fmt)
-
-        observed_targets_SSO = list(set(observed_targets_SSO))
-        observed_targets_SNO = list(set(observed_targets_SNO))
-        observed_targets_SaintEx = list(set(observed_targets_SaintEx))
-
+            observed_targets_SaintEx += saintex_planned_targets(day_fmt)
 
         self.idx_planned_sso, self.idx_SSO_in_planned = index_list1_list2(observed_targets_SSO,
                                                                           self.target_table_spc['Sp_ID'])
@@ -1312,9 +1388,17 @@ class Schedules:
         #self.idx_first_target = self.index_prio[idx_init_first]
 
         self.first_target = self.priority_ranked[np.argmax(self.priority_ranked['priority'])]  #self.priority[self.idx_first_target]
+
+        for j in np.arange(len(self.priority_ranked)):
+            nb_hours_df = self.update_hours(self.day, self.first_target)
+            if nb_hours_df['nb_hours_observed'] + nb_hours_df['nb_hours_planned']>200:
+                self.first_target = self.priority_ranked[np.argmax(self.priority_ranked['priority'])-j]
+                continue
+            else:
+                break
+        
+        #print(nb_hours_df)
         self.selected_first_target = [t for t in self.targets if t.name == self.first_target['target_name']]
-        nb_hours_df = self.update_hours(self.day, self.first_target)
-        print(nb_hours_df)
         self.idx_first_target =  np.where(self.target_table_spc['Sp_ID'] == self.first_target['target_name'])[0]
 
         dt_1day = Time('2018-01-02 00:00:00', scale='tcg') - Time('2018-01-01 00:00:00', scale='tcg')  # 1 day

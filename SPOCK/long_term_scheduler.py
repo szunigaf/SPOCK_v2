@@ -1386,9 +1386,17 @@ class Schedules:
         #self.idx_first_target = self.index_prio[idx_init_first]
 
         self.first_target = self.priority_ranked[np.argmax(self.priority_ranked['priority'])]  #self.priority[self.idx_first_target]
+
+        for j in np.arange(len(self.priority_ranked)):
+            nb_hours_df = self.update_hours(self.day, self.first_target)
+            if nb_hours_df['nb_hours_observed'] + nb_hours_df['nb_hours_planned']>200:
+                self.first_target = self.priority_ranked[np.argmax(self.priority_ranked['priority'])-j]
+                continue
+            else:
+                break
+        
+        #print(nb_hours_df)
         self.selected_first_target = [t for t in self.targets if t.name == self.first_target['target_name']]
-        nb_hours_df = self.update_hours(self.day, self.first_target)
-        print(nb_hours_df)
         self.idx_first_target =  np.where(self.target_table_spc['Sp_ID'] == self.first_target['target_name'])[0]
 
         dt_1day = Time('2018-01-02 00:00:00', scale='tcg') - Time('2018-01-01 00:00:00', scale='tcg')  # 1 day

@@ -193,4 +193,5 @@ _site/
 
 Notebooks/
 
-./SPOCK/__pychache__
+__pycache__/
+*.pyc

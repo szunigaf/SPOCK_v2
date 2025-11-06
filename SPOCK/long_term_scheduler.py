@@ -238,14 +238,12 @@ def sso_planned_targets(date_is, telescope):
         list of targets scheduled on this SSO telescope that  day
 
     """
-    if (telescope == 'Artemis') or (telescope == 'Saint-Ex') or (telescope == 'TS_La_Silla') or \
-            (telescope == 'TN_Oukaimeden'):
-        telescopes = ['Io', 'Europa', 'Ganymede', 'Callisto']
-    else:
-        telescopes = ['Io', 'Europa', 'Ganymede', 'Callisto']
-        telescopes = np.delete(telescopes, telescopes.index(telescope))
+    telescopes = ['Io', 'Europa', 'Ganymede', 'Callisto']
+    if telescope in telescopes:
+        telescopes.remove(telescope)
     targets_on_sso_telescopes = []
 
+    #local
     for i in range(len(telescopes)):
         night_block_str = '/night_blocks_' + telescopes[i] + '_' + str(date_is) + '.txt'
         path = path_spock + '/DATABASE/' + telescopes[i] + '/Archive_night_blocks/' + night_block_str
@@ -256,7 +254,23 @@ def sso_planned_targets(date_is, telescope):
         except FileNotFoundError:
             print(Fore.YELLOW + 'WARNING: ' + Fore.BLACK + ' No plans in your local file for  ' +
                   telescopes[i] + ' on the ' + str(date_is))
+    #online
+    for i in range(len(telescopes)):
+        nightb_url = "https://speculoos.withastra.io/SPECULOOS/Observations/" + telescope + '/schedule/Archive_night_blocks/night_blocks_' + \
+                     telescope + '_' + str(date_is) + '.txt'
+        nightb = requests.get(nightb_url, auth=(user_portal, pwd_portal))
 
+        if nightb.status_code == 404:
+            sys.exit(Fore.RED + 'ERROR:  ' + Fore.BLACK + ' No plans on the server for this date')
+        else:
+            path_local = path_spock + '/DATABASE/' + telescope + '/Archive_night_blocks/night_blocks_' + telescope + '_' + \
+                 str(date_is) + '.txt'
+            open(path_local, 'wb').write(nightb.content)
+            nb_online = pd.read_csv(path_local, delimiter=' ', index_col=False)     
+            for tar in nb_online['target']:
+                targets_on_sso_telescopes.append(tar)  
+    
+    targets_on_sso_telescopes = list(set(targets_on_sso_telescopes))
     return targets_on_sso_telescopes
 
 
@@ -274,9 +288,11 @@ def sno_planned_targets(date_is):
         list of targets scheduled on this SNO that  day
 
     """
-    telescopes = ['Artemis', 'Saint-Ex']
+    telescopes = ['Artemis']
     targets_on_sno_telescopes = []
-    for i in range(len(telescopes)): # local
+
+    #local
+    for i in range(len(telescopes)): 
         night_block_str = '/night_blocks_' + telescopes[i] + '_' + str(date_is) + '.txt'
         path = path_spock + '/DATABASE/' + telescopes[i] + '/Archive_night_blocks/' + night_block_str
         try:
@@ -286,8 +302,71 @@ def sno_planned_targets(date_is):
         except FileNotFoundError:
             print(Fore.YELLOW + 'WARNING: ' + Fore.BLACK + ' No plans in your local file for  ' +
                   telescopes[i] + ' on the ' + str(date_is))
+            
+    #online
+    for i in range(len(telescopes)):
+        nightb_url = "https://speculoos.withastra.io/SPECULOOS/Observations/" + telescopes[i] + '/schedule/Archive_night_blocks/night_blocks_' + telescopes[i] + '_' + str(date_is) + '.txt'
+        nightb = requests.get(nightb_url, auth=(user_portal, pwd_portal))
+
+        if nightb.status_code == 404:
+            sys.exit(Fore.RED + 'ERROR:  ' + Fore.BLACK + ' No plans on the server for this date')
+        else:
+            path_local = path_spock + '/DATABASE/' + telescopes[i] + '/Archive_night_blocks/night_blocks_' + telescopes[i] + '_' + \
+                 str(date_is) + '.txt'
+            open(path_local, 'wb').write(nightb.content)
+            nb_online = pd.read_csv(path_local, delimiter=' ', index_col=False)     
+            for tar in nb_online['target']:
+                targets_on_sno_telescopes.append(tar)  
+    
+    targets_on_sno_telescopes = list(set(targets_on_sno_telescopes))
     return targets_on_sno_telescopes
 
+def saintex_planned_targets(date_is):
+    """ tell which target are scheduled on SNO on a given day
+
+    Parameters
+    ----------
+    date_is : date
+        date of day in fmt 'yyyy-mm-dd'
+
+    Returns
+    -------
+    list
+        list of targets scheduled on this Saint-Ex that  day
+
+    """
+    telescopes = ['Saint-Ex']
+    targets_on_saintex_telescopes = []
+
+    #local
+    for i in range(len(telescopes)): 
+        night_block_str = '/night_blocks_' + telescopes[i] + '_' + str(date_is) + '.txt'
+        path = path_spock + '/DATABASE/' + telescopes[i] + '/Archive_night_blocks/' + night_block_str
+        try:
+            c = pd.read_csv(path, delimiter=' ', index_col=False)
+            for tar in c['target']:
+                targets_on_saintex_telescopes.append(tar)
+        except FileNotFoundError:
+            print(Fore.YELLOW + 'WARNING: ' + Fore.BLACK + ' No plans in your local file for  ' +
+                  telescopes[i] + ' on the ' + str(date_is))
+            
+    #online
+    for i in range(len(telescopes)):
+        nightb_url = "https://speculoos.withastra.io/SPECULOOS/Observations/" + telescopes[i] + '/schedule/Archive_night_blocks/night_blocks_' + telescopes[i] + '_' + str(date_is) + '.txt'
+        nightb = requests.get(nightb_url, auth=(user_portal, pwd_portal))
+
+        if nightb.status_code == 404:
+            sys.exit(Fore.RED + 'ERROR:  ' + Fore.BLACK + ' No plans on the server for this date')
+        else:
+            path_local = path_spock + '/DATABASE/' + telescopes[i] + '/Archive_night_blocks/night_blocks_' + telescopes[i] + '_' + \
+                 str(date_is) + '.txt'
+            open(path_local, 'wb').write(nightb.content)
+            nb_online = pd.read_csv(path_local, delimiter=' ', index_col=False)     
+            for tar in nb_online['target']:
+                targets_on_saintex_telescopes.append(tar)  
+    
+    targets_on_saintex_telescopes = list(set(targets_on_saintex_telescopes))
+    return targets_on_saintex_telescopes
 
 def ts_planned_targets(date_is):
     """ tell which target are scheduled on TS on a given day
@@ -1203,12 +1282,7 @@ class Schedules:
             day_fmt = Time(date.iso, out_subfmt='date').iso
             observed_targets_SSO += sso_planned_targets(day_fmt, self.telescope)
             observed_targets_SNO += sno_planned_targets(day_fmt)
-            observed_targets_SaintEx += sno_planned_targets(day_fmt)
-
-        observed_targets_SSO = list(set(observed_targets_SSO))
-        observed_targets_SNO = list(set(observed_targets_SNO))
-        observed_targets_SaintEx = list(set(observed_targets_SaintEx))
-
+            observed_targets_SaintEx += saintex_planned_targets(day_fmt)
 
         self.idx_planned_sso, self.idx_SSO_in_planned = index_list1_list2(observed_targets_SSO,
                                                                           self.target_table_spc['Sp_ID'])

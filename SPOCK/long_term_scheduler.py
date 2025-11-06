@@ -704,10 +704,10 @@ def upload_plans(day, nb_days, telescope):
     if (telescope == 'Io') or telescope == ('Europa') or (telescope == 'Ganymede') or (telescope == 'Callisto') or (telescope =='Artemis')\
             or (telescope =='Saint-Ex'):
         upload_np(day,nb_days,telescope)
-    if telescope.find('TS_La_Silla') is not -1:
-        upload_np_ts(day, nb_days)
-    if telescope.find('TN_Oukaimeden') is not -1:
-        upload_np_tn(day, nb_days)
+    #if telescope.find('TS_La_Silla') is not -1:
+    #    upload_np_ts(day, nb_days)
+    #if telescope.find('TN_Oukaimeden') is not -1:
+    #    upload_np_tn(day, nb_days)
 
     # ------------------- update archive date by date plans folder  ------------------
 
@@ -774,6 +774,11 @@ class Schedules:
         self.target_table_spc = []
         self.telescopes = ['Io', 'Europa', 'Ganymede', 'Callisto', 'TS_La_Silla', 'TN_Oukaimeden']
         self.telescope = []
+        #self.start_between_civil_nautical = None
+        #self.end_between_civil_nautical = None
+        self.start_night = None
+        self.end_night = None
+        self.night_duration = None
 
     @property
     def idx_rise_targets_sorted(self):
@@ -1134,6 +1139,48 @@ class Schedules:
                          error_bad_lines=False)
         df = df.sort_values(['Target'])
         df.to_csv(path_spock + '/survey_hours/SurveyByTelescope.txt', sep=' ', index=False)
+        
+    def time_of_night(self, day):
+        '''
+
+        :param day: day str format '%y%m%d HH:MM:SS.sss'
+        :return:
+        '''
+        dt_1day = Time('2018-01-02 00:00:00', scale='tt') - Time('2018-01-01 00:00:00', scale='tt')
+        if self.telescope == 'Io' or self.telescope == 'Europa' or self.telescope == 'Ganymede' \
+                        or self.telescope == 'Callisto':
+            self.start_night = Time((Time(self.observatory.twilight_evening_nautical(day,
+                                                       which='next')).value +
+                                             Time(self.observatory.twilight_evening_civil(
+                                                 day,
+                                                 which='next')).value) / 2,
+                                            format='jd')
+
+            self.end_night = Time((Time(self.observatory.twilight_morning_nautical(day + 1,
+                                                       which='nearest')).value +
+                                           Time(self.observatory.twilight_morning_civil(
+                                               day + 1,
+                                               which='nearest')).value) / 2,
+                                          format='jd')
+        if self.telescope == "Artemis":
+            self.start_night = Time(self.observatory.sun_set_time(day, which='next',
+                                                                              horizon=-12 * u.degree).iso)
+            self.end_night = Time(self.observatory.sun_rise_time(day, which='next',
+                                                                             horizon=-12 * u.degree).iso)
+        if self.telescope == "Saint-Ex":
+            self.start_night = Time(self.observatory.sun_set_time(day, which='next',
+                                                            horizon=-8.19 * u.degree).iso)
+            self.end_night = Time(self.observatory.sun_rise_time(day, which='next',
+                                                           horizon=-8.19 * u.degree).iso)
+            if (self.start_night > self.end_night) or (self.end_night - self.start_night).value > 1:
+                sys.exit('ERROR: Problem with start/end of night  on Saint-Ex !!')
+        # if self.telescope == 'Saint-Ex':
+        #     dura = end_saint_ex - start_saint_ex
+        # else:
+        self.night_duration = self.end_night - self.start_night
+        # dura = Time(Time(self.observatory.twilight_morning_nautical(day + dt_1day ,which='nearest')).jd - \
+        # Time(self.observatory.twilight_evening_nautical(day ,which='next')).jd,format='jd')
+        # return dura
 
     def make_schedule(self, Altitude_constraint=None, Moon_constraint=None):
         self.Altitude_constraint = Altitude_constraint
@@ -1175,8 +1222,8 @@ class Schedules:
         if self.Moon_constraint:
             self.constraints.append(MoonSeparationConstraint(min=float(self.Moon_constraint) * u.deg))
 
-        if str(self.strategy) == 'alternative':
-            self.is_moon_and_visibility_constraint()
+        # if str(self.strategy) == 'alternative':
+        #     self.is_moon_and_visibility_constraint()
 
         if str(self.strategy) == 'continuous':
             self.reverse_df1 = reverse_observability(self.observatory, self.targets, self.constraints, self.time_ranges)
@@ -1191,10 +1238,10 @@ class Schedules:
                 self.end_night = self.observatory.sun_rise_time(day, which='next', horizon=horizon_for_set_and_rise)
                 self.table_priority_prio(day)
                 self.idx_nightly_targets(t)
-                self.priority_by_day.append(self.priority)
-                self.index_prio_by_day.append(self.index_prio)
-                self.priority_ranked_by_day.append(self.priority_ranked)
-                end = time.time()
+                #self.priority_by_day.append(self.priority)
+                #self.index_prio_by_day.append(self.index_prio)
+                #self.priority_ranked_by_day.append(self.priority_ranked)
+                #end = time.time()
 
                 if self.is_constraints_met_first_target(t):
                     self.first_target = self.priority[self.idx_first_target]
@@ -1290,17 +1337,27 @@ class Schedules:
 
         for i in range(2, len(self.targets)):
             # print(self.targets[self.idx_first_target].name)
+            self.second_target = self.priority_ranked[-i]  #self.priority[self.idx_first_target]
+            self.selected_second_target = [t for t in self.targets if t.name == self.second_target['target_name']]
             rise_first_target = self.observatory.target_rise_time(self.date_range[0] + t,
                                                                   self.selected_first_target,
                                                                   which='next',
                                                                   horizon=self.Altitude_constraint * u.deg)
+            rise_second_target = self.observatory.target_rise_time(self.date_range[0] + t,
+                                                            self.selected_second_target,
+                                                            which='next',
+                                                            horizon=self.Altitude_constraint * u.deg)
             set_first_target = self.observatory.target_set_time(self.date_range[0] + t,
                                                                 self.selected_first_target,
                                                                 which='next',
                                                                 horizon=self.Altitude_constraint * u.deg)
+            
+            set_second_target = self.observatory.target_set_time(self.date_range[0] + t,
+                                                            self.selected_second_target,
+                                                            which='next',
+                                                            horizon=self.Altitude_constraint * u.deg)
 
-            if set_first_target \
-                    < self.observatory.target_rise_time(self.date_range[0] + t,
+            if set_first_target < self.observatory.target_rise_time(self.date_range[0] + t,
                                                         self.selected_first_target,
                                                         which='nearest',
                                                         horizon=self.Altitude_constraint * u.deg):  # typically happens for Saint-Ex as the night start in the middle of a UTC time night
@@ -1334,33 +1391,7 @@ class Schedules:
             #                                                        horizon=self.Altitude_constraint * u.deg)
                     
 
-            self.second_target = self.priority_ranked[-i]  #self.priority[self.idx_first_target]
-            self.selected_second_target = [t for t in self.targets if t.name == self.second_target['target_name']]
 
-            set_second_target = self.observatory.target_set_time(self.date_range[0] + t,
-                                                            self.selected_second_target,
-                                                            which='next',
-                                                            horizon=self.Altitude_constraint * u.deg)
-            rise_second_target = self.observatory.target_rise_time(self.date_range[0] + t,
-                                                            self.selected_second_target,
-                                                            which='next',
-                                                            horizon=self.Altitude_constraint * u.deg)
-
-            # start_between_civil_nautical = Time((Time(
-            #     self.observatory.twilight_evening_nautical(self.date_range[0] + dt_1day * t,
-            #                                                which='next')).value +
-            #                                      Time(self.observatory.twilight_evening_civil(
-            #                                          self.date_range[0] + dt_1day * t,
-            #                                          which='next')).value) / 2,
-            #                                     format='jd')
-
-            # end_between_nautical_civil = Time((Time(
-            #     self.observatory.twilight_morning_nautical(self.date_range[0] + dt_1day * (t + 1),
-            #                                                which='nearest')).value +
-            #                                    Time(self.observatory.twilight_morning_civil(
-            #                                        self.date_range[0] + dt_1day * (t + 1),
-            #                                        which='nearest')).value) / 2,
-            #                                   format='jd')
             # if self.telescope == "Artemis":
             #     start_between_civil_nautical = Time(self.observatory.sun_set_time(self.date_range[0] + dt_1day * t,
             #                                                                       which='next',
@@ -1369,17 +1400,22 @@ class Schedules:
             #                                                                      which='next',
             #                                                                      horizon=-12 * u.degree).iso)
 
-            start_saint_ex = Time(self.observatory.sun_set_time(self.date_range[0] + dt_1day * t, which='next',
-                                                                horizon=-8.19 * u.degree).iso)
-            end_saint_ex = Time(self.observatory.sun_rise_time(self.date_range[0] + dt_1day * t, which='next',
-                                                               horizon=-8.19 * u.degree).iso)
-            if (start_saint_ex > end_saint_ex) or (end_saint_ex - start_saint_ex).value > 1:
-                sys.exit('ERROR: Problem with start/end of night  on Saint-Ex !!')
+            # start_saint_ex = Time(self.observatory.sun_set_time(self.date_range[0] + dt_1day * t, which='next',
+            #                                                     horizon=-8.19 * u.degree).iso)
+            # end_saint_ex = Time(self.observatory.sun_rise_time(self.date_range[0] + dt_1day * t, which='next',
+            #                                                    horizon=-8.19 * u.degree).iso)
+            # if (start_saint_ex > end_saint_ex) or (end_saint_ex - start_saint_ex).value > 1:
+            #     sys.exit('ERROR: Problem with start/end of night  on Saint-Ex !!')
 
             if self.telescope == "Saint-Ex":
-                if self.first_target['rise'] | self.first_target['both'] :
-                    if self.second_target['set']:
-                        if (rise_second_target < start_saint_ex) and \
+                if self.first_target['both']:
+                    # self.idx_second_target = self.idx_first_target
+                    self.second_target = self.first_target
+                    break
+                    
+                if self.first_target['rise'] :
+                    if self.second_target['set'].any() or self.first_target['both'].any():
+                        if (rise_second_target < self.start_night) and \
                                 (set_second_target > rise_first_target):
                             # self.idx_second_target = self.index_prio[-i]
                             # self.second_target = self.priority[self.idx_second_target]
@@ -1397,8 +1433,8 @@ class Schedules:
                     #         break
 
                 if self.first_target['set']:
-                    if self.second_target['rise'] | self.first_target['both'] :
-                        if (set_second_target > end_saint_ex) and \
+                    if self.second_target['rise'].any() or self.first_target['both'].any() :
+                        if (set_second_target > self.end_night) and \
                                 (rise_second_target < set_first_target):
                             # self.idx_second_target = self.index_prio[-i]
                             # self.second_target = self.priority[self.idx_second_target]
@@ -1415,58 +1451,69 @@ class Schedules:
                     #         self.second_target = self.priority[self.idx_second_target]
                     #         break
 
-                if self.first_target['both']:
-                    # self.idx_second_target = self.idx_first_target
-                    self.second_target = self.first_target
-                    break
-
             if (self.telescope == 'Io') or (self.telescope == 'Europa') or (self.telescope == 'Ganymede') or \
                 (self.telescope == 'Callisto') or (self.telescope == 'Artemis'):
-                if self.first_target['set or rise'] == 'rise':
-                    if self.priority['set or rise'][self.index_prio[-i]] == 'set':
-                        if (rise_target < start_between_civil_nautical) and \
-                                (set_target > rise_first_target):
-                            self.idx_second_target = self.index_prio[-i]
-                            self.second_target = self.priority[self.idx_second_target]
+
+                # start_between_civil_nautical = Time((Time(
+                # self.observatory.twilight_evening_nautical(self.date_range[0] + dt_1day * t,
+                #                                            which='next')).value +
+                #                                  Time(self.observatory.twilight_evening_civil(
+                #                                      self.date_range[0] + dt_1day * t,
+                #                                      which='next')).value) / 2,
+                #                                 format='jd')
+
+                # end_between_nautical_civil = Time((Time(
+                # self.observatory.twilight_morning_nautical(self.date_range[0] + dt_1day * (t + 1),
+                #                                            which='nearest')).value +
+                #                                Time(self.observatory.twilight_morning_civil(
+                #                                    self.date_range[0] + dt_1day * (t + 1),
+                #                                    which='nearest')).value) / 2,
+                #                               format='jd')
+                if self.first_target['rise'] :
+                    if self.second_target['set'].any() or self.first_target['both'].any():
+                        if (rise_second_target < self.start_night) and \
+                                (set_second_target > rise_first_target):
+                            # self.idx_second_target = self.index_prio[-i]
+                            #self.second_target = self.priority[self.idx_second_target]
                             break
 
                         else:
                             self.second_target = None
-                            self.idx_second_target = None
+                            # self.idx_second_target = None
 
-                    if self.priority['set or rise'][self.index_prio[-i]] == 'both':
-                        if (rise_target < start_between_civil_nautical) and \
-                                (set_target > rise_first_target):
-                            self.idx_second_target = self.index_prio[-i]
-                            self.second_target = self.priority[self.idx_second_target]
-                            break
+                    # if self.priority['both']:
+                    #     if (rise_second_target < start_between_civil_nautical) and \
+                    #             (set_second_target > rise_first_target):
+                            #self.idx_second_target = self.index_prio[-i]
+                            #self.second_target = self.priority[self.idx_second_target]
+                            # break
 
-                if self.first_target['set or rise'] == 'set':
-                    if self.priority['set or rise'][self.index_prio[-i]] == 'rise':
-                        if (set_target > end_between_nautical_civil) and \
-                                (rise_target < set_first_target):
-                            self.idx_second_target = self.index_prio[-i]
-                            self.second_target = self.priority[self.idx_second_target]
+                if self.first_target['set']:
+                    if self.priority['rise'].any() or self.priority['both'].any() :
+                        if (set_second_target > self.end_night) and \
+                                (rise_second_target < set_first_target):
+                            #self.idx_second_target = self.index_prio[-i]
+                            #self.second_target = self.priority[self.idx_second_target]
                             break
 
                         else:
                             self.second_target = None
-                            self.idx_second_target = None
+                            #self.idx_second_target = None
 
-                    if self.priority['set or rise'][self.index_prio[-i]] == 'both':
-                        if (set_target > end_between_nautical_civil) and \
-                                (rise_target < set_first_target):
-                            self.idx_second_target = self.index_prio[-i]
-                            self.second_target = self.priority[self.idx_second_target]
-                            break
+                    # if self.priority['set or rise'][self.index_prio[-i]] == 'both':
+                    #     if (set_target > end_between_nautical_civil) and \
+                    #             (rise_target < set_first_target):
+                    #         self.idx_second_target = self.index_prio[-i]
+                    #         self.second_target = self.priority[self.idx_second_target]
+                    #         break
 
-                if self.first_target['set or rise'] == 'both':
-                    self.idx_second_target = self.idx_first_target
+                if self.first_target['both']:
+                    #self.idx_second_target = self.idx_first_target
                     self.second_target = self.first_target
                     # print( self.first_target)
                     break
 
-        if self.idx_second_target is None:
+        if self.second_target is None:
             print(Fore.GREEN + 'INFO: ' + Fore.BLACK + ' no second target available')
 
     def table_priority_prio(self, day):
@@ -1518,23 +1565,23 @@ class Schedules:
         horizon_for_set_and_rise = -12 * u.degree # degrees
 
         if self.telescope == 'Saint-Ex':
-            self.start_night = self.observatory.sun_set_time(day, which='next', horizon=-8.19* u.degree).jd
-            self.end_night = self.observatory.sun_rise_time(day, which='next', horizon=-8.19* u.degree).jd
-            start_night_start_saint_ex = Time(self.observatory.sun_set_time(day, which='next',
-                                                                            horizon=-8.19 * u.degree).iso)
-            if start_night_start_saint_ex < day:
-                sys.exit('ERROR: Problem with start/end of night  on Saint-Ex !!')
+            # self.start_night = self.observatory.sun_set_time(day, which='next', horizon=-8.19* u.degree)
+            # self.end_night = self.observatory.sun_rise_time(day, which='next', horizon=-8.19* u.degree)
+            # start_night_start_saint_ex = Time(self.observatory.sun_set_time(day, which='next',
+            #                                                                 horizon=-8.19 * u.degree).iso)
+            # if start_night_start_saint_ex < day:
+            #     sys.exit('ERROR: Problem with start/end of night  on Saint-Ex !!')
             delta_midnight_start = np.linspace(0, self.observatory.sun_rise_time(day, which='next',
                                                                                     horizon=-8.19 * u.degree).jd -
                                                 self.observatory.sun_set_time(day, which='nearest',
                                                                                 horizon=-8.19 * u.degree).jd,
                                                 nb_reso_grid) * u.day  # Delta at the first day of schedule
-            frame_start = AltAz(obstime=start_night_start_saint_ex + delta_midnight_start,
+            frame_start = AltAz(obstime=self.start_night + delta_midnight_start,
                                 location=self.observatory.location)
 
-            start_night_end_saint_ex = Time(self.observatory.sun_set_time(day + self.date_range_in_days,
-                                                                            which='nearest',
-                                                                            horizon=-8.19 * u.degree).iso)
+            #start_night_end_saint_ex = Time(self.observatory.sun_set_time(day + self.date_range_in_days,
+            #                                                                which='nearest',
+            #                                                                horizon=-8.19 * u.degree).iso)
             delta_midnight_end = np.linspace(0, self.observatory.sun_rise_time(day + self.date_range_in_days,
                                                                                 which='next',
                                                                                 horizon=-8.19 * u.degree).jd
@@ -1542,7 +1589,7 @@ class Schedules:
                                                                                 which='nearest',
                                                                                 horizon=-8.19 * u.degree).jd,
                                                 nb_reso_grid) * u.day  # Delta at the first day of schedule
-            frame_end = AltAz(obstime=start_night_end_saint_ex + delta_midnight_end,
+            frame_end = AltAz(obstime=self.end_night + delta_midnight_end,
                                 location=self.observatory.location)
             
         # if self.telescope == "Artemis":
@@ -1683,6 +1730,7 @@ class Schedules:
 
     def init_priority_table(self, day):
         day_fmt = Time(day.iso, out_subfmt='date').iso
+        self.time_of_night(day)
         if os.path.exists(path_spock + '/SPOCK_files/Ranking_months_' + str(self.observatory.name)  + '_' + str(day_fmt)   + '.csv'):
             name_file = path_spock + '/SPOCK_files/Ranking_months_' + str(self.observatory.name) + '_' +  str(day_fmt) + '.csv'
             dataframe_ranking_months = pd.read_csv(name_file, delimiter=',')
@@ -1885,52 +1933,52 @@ class Schedules:
         dur_obs_rise_target = (self.night_duration(
             day).value / 2 + shift / self.date_range_in_days) * u.day  # (self.night_duration(day)/(2*u.day))*u.day-1*((aa.value/30)*u.hour-t/(aa.value/2)*u.hour)
 
-        start_between_civil_nautical = Time((Time(
-            self.observatory.twilight_evening_nautical(day + dt_1day * 0,
-                                                       which='next')).value +
-                                             Time(self.observatory.twilight_evening_civil(
-                                                 day + dt_1day * 0,
-                                                 which='next')).value) / 2,
-                                            format='jd')
+        # start_between_civil_nautical = Time((Time(
+        #     self.observatory.twilight_evening_nautical(day + dt_1day * 0,
+        #                                                which='next')).value +
+        #                                      Time(self.observatory.twilight_evening_civil(
+        #                                          day + dt_1day * 0,
+        #                                          which='next')).value) / 2,
+        #                                     format='jd')
 
-        end_between_nautical_civil = Time((Time(
-            self.observatory.twilight_morning_nautical(day + dt_1day * (0 + 1),
-                                                       which='nearest')).value +
-                                           Time(self.observatory.twilight_morning_civil(
-                                               day + dt_1day * (0 + 1),
-                                               which='nearest')).value) / 2,
-                                          format='jd')
-        if self.telescope == "Artemis":
-            start_between_civil_nautical = Time(self.observatory.sun_set_time(day, which='next',
-                                                                              horizon=-12 * u.degree).iso)
-            end_between_nautical_civil = Time(self.observatory.sun_rise_time(day, which='next',
-                                                                             horizon=-12 * u.degree).iso)
+        # end_between_nautical_civil = Time((Time(
+        #     self.observatory.twilight_morning_nautical(day + dt_1day * (0 + 1),
+        #                                                which='nearest')).value +
+        #                                    Time(self.observatory.twilight_morning_civil(
+        #                                        day + dt_1day * (0 + 1),
+        #                                        which='nearest')).value) / 2,
+        #                                   format='jd')
+        # if self.telescope == "Artemis":
+        #     start_between_civil_nautical = Time(self.observatory.sun_set_time(day, which='next',
+        #                                                                       horizon=-12 * u.degree).iso)
+        #     end_between_nautical_civil = Time(self.observatory.sun_rise_time(day, which='next',
+        #                                                                      horizon=-12 * u.degree).iso)
 
-        start_saint_ex = Time(self.observatory.sun_set_time(day, which='next',
-                                                            horizon=-8.19 * u.degree).iso)
-        end_saint_ex = Time(self.observatory.sun_rise_time(day, which='next',
-                                                           horizon=-8.19 * u.degree).iso)
-        if (start_saint_ex > end_saint_ex) or (end_saint_ex - start_saint_ex).value > 1:
-            sys.exit('ERROR: Problem with start/end of night  on Saint-Ex !!')
+        # start_saint_ex = Time(self.observatory.sun_set_time(day, which='next',
+        #                                                     horizon=-8.19 * u.degree).iso)
+        # end_saint_ex = Time(self.observatory.sun_rise_time(day, which='next',
+        #                                                    horizon=-8.19 * u.degree).iso)
+        # if (start_saint_ex > end_saint_ex) or (end_saint_ex - start_saint_ex).value > 1:
+        #     sys.exit('ERROR: Problem with start/end of night  on Saint-Ex !!')
 
         if self.telescope == 'Saint-Ex':
-            constraints_set_target = self.constraints + [TimeConstraint(start_saint_ex,
-                                                                        (start_saint_ex + dur_obs_set_target))]
-            constraints_rise_target = self.constraints + [TimeConstraint((start_saint_ex + dur_obs_set_target),
-                                                                         end_saint_ex)]
-            constraints_all = self.constraints + [TimeConstraint(start_saint_ex, end_saint_ex)]
+            constraints_set_target = self.constraints + [TimeConstraint(self.start_night,
+                                                                        (self.start_night + dur_obs_set_target))]
+            constraints_rise_target = self.constraints + [TimeConstraint((self.start_night + dur_obs_set_target),
+                                                                         self.end_night)]
+            constraints_all = self.constraints + [TimeConstraint(self.start_night, self.end_night)]
 
         else:
-            constraints_set_target = self.constraints + [TimeConstraint(start_between_civil_nautical,
-                                                                        (start_between_civil_nautical +
+            constraints_set_target = self.constraints + [TimeConstraint(self.start_night,
+                                                                        (self.start_night +
                                                                          dur_obs_set_target))]
 
-            constraints_rise_target = self.constraints + [TimeConstraint((start_between_civil_nautical +
+            constraints_rise_target = self.constraints + [TimeConstraint((self.start_night +
                                                                           dur_obs_set_target),
-                                                                         end_between_nautical_civil)]
+                                                                         self.end_night)]
 
-            constraints_all = self.constraints + [TimeConstraint(start_between_civil_nautical,
-                                                                 end_between_nautical_civil)]
+            constraints_all = self.constraints + [TimeConstraint(self.start_night,
+                                                                 self.end_night)]
 
         blocks = []
         # if self.target_table_spc['texp_spc'][self.idx_first_target] == 0:
@@ -2035,48 +2083,6 @@ class Schedules:
             is_hours_constraint_met_target = False
         return is_hours_constraint_met_target
 
-    def night_duration(self, day):
-        '''
-
-        :param day: day str format '%y%m%d HH:MM:SS.sss'
-        :return:
-        '''
-        dt_1day = Time('2018-01-02 00:00:00', scale='tt') - Time('2018-01-01 00:00:00', scale='tt')
-        start_between_civil_nautical = Time((Time(
-            self.observatory.twilight_evening_nautical(day,
-                                                       which='next')).value +
-                                             Time(self.observatory.twilight_evening_civil(
-                                                 day,
-                                                 which='next')).value) / 2,
-                                            format='jd')
-
-        end_between_nautical_civil = Time((Time(
-            self.observatory.twilight_morning_nautical(day + 1,
-                                                       which='nearest')).value +
-                                           Time(self.observatory.twilight_morning_civil(
-                                               day + 1,
-                                               which='nearest')).value) / 2,
-                                          format='jd')
-        if self.telescope == "Artemis":
-            start_between_civil_nautical = Time(self.observatory.sun_set_time(day, which='next',
-                                                                              horizon=-12 * u.degree).iso)
-            end_between_nautical_civil = Time(self.observatory.sun_rise_time(day, which='next',
-                                                                             horizon=-12 * u.degree).iso)
-
-        start_saint_ex = Time(self.observatory.sun_set_time(day, which='next',
-                                                            horizon=-8.19 * u.degree).iso)
-        end_saint_ex = Time(self.observatory.sun_rise_time(day, which='next',
-                                                           horizon=-8.19 * u.degree).iso)
-        if (start_saint_ex > end_saint_ex) or (end_saint_ex - start_saint_ex).value > 1:
-            sys.exit('ERROR: Problem with start/end of night  on Saint-Ex !!')
-        if self.telescope == 'Saint-Ex':
-            dura = end_saint_ex - start_saint_ex
-        else:
-            dura = end_between_nautical_civil - start_between_civil_nautical
-        # dura = Time(Time(self.observatory.twilight_morning_nautical(day + dt_1day ,which='nearest')).jd - \
-        # Time(self.observatory.twilight_evening_nautical(day ,which='next')).jd,format='jd')
-        return dura
-
     def info_obs_possible(self, day):
         '''
 
@@ -2134,48 +2140,51 @@ class Schedules:
 
         dt_1day = Time('2018-01-02 00:00:00', scale='utc') - Time('2018-01-01 00:00:00', scale='utc')
 
-        start_between_civil_nautical = Time((Time(
-            self.observatory.twilight_evening_nautical(day,
-                                                       which='next')).value +
-                                             Time(self.observatory.twilight_evening_civil(
-                                                 day,
-                                                 which='next')).value) / 2,
-                                            format='jd')
+        # start_between_civil_nautical = Time((Time(
+        #     self.observatory.twilight_evening_nautical(day,
+        #                                                which='next')).value +
+        #                                      Time(self.observatory.twilight_evening_civil(
+        #                                          day,
+        #                                          which='next')).value) / 2,
+        #                                     format='jd')
 
-        end_between_nautical_civil = Time((Time(
-            self.observatory.twilight_morning_nautical(day + dt_1day,
-                                                       which='nearest')).value +
-                                           Time(self.observatory.twilight_morning_civil(
-                                               day + dt_1day,
-                                               which='nearest')).value) / 2,
-                                          format='jd')
-        if self.telescope == "Artemis":
-            start_between_civil_nautical = Time(self.observatory.sun_set_time(day, which='next',
-                                                                              horizon=-12 * u.degree).iso)
-            end_between_nautical_civil = Time(self.observatory.sun_rise_time(day, which='next',
-                                                                             horizon=-12 * u.degree).iso)
+        # end_between_nautical_civil = Time((Time(
+        #     self.observatory.twilight_morning_nautical(day + dt_1day,
+        #                                                which='nearest')).value +
+        #                                    Time(self.observatory.twilight_morning_civil(
+        #                                        day + dt_1day,
+        #                                        which='nearest')).value) / 2,
+        #                                   format='jd')
+        # if self.telescope == "Artemis":
+        #     start_between_civil_nautical = Time(self.observatory.sun_set_time(day, which='next',
+        #                                                                       horizon=-12 * u.degree).iso)
+        #     end_between_nautical_civil = Time(self.observatory.sun_rise_time(day, which='next',
+        #                                                                      horizon=-12 * u.degree).iso)
 
-        start_saint_ex = Time(self.observatory.sun_set_time(day, which='next',
-                                                            horizon=-8.19 * u.degree).iso)
-        end_saint_ex = Time(self.observatory.sun_rise_time(day, which='next',
-                                                           horizon=-8.19 * u.degree).iso)
-        if (start_saint_ex > end_saint_ex) or (end_saint_ex - start_saint_ex).value > 1:
-            sys.exit('ERROR: Problem with start/end of night  on Saint-Ex !!')
-        if self.telescope == 'Saint-Ex':
-            self.observability_table_day = observability_table(self.constraints, self.observatory, self.targets,
-                                                               time_range=Time([start_saint_ex.iso,
-                                                                                end_saint_ex.iso]))
-        else:
-            self.observability_table_day = observability_table(self.constraints, self.observatory, self.targets,
-                                                               time_range=Time([start_between_civil_nautical.iso,
-                                                                                end_between_nautical_civil.iso]))
+        # start_saint_ex = Time(self.observatory.sun_set_time(day, which='next',
+        #                                                     horizon=-8.19 * u.degree).iso)
+        # end_saint_ex = Time(self.observatory.sun_rise_time(day, which='next',
+        #                                                    horizon=-8.19 * u.degree).iso)
+        # if (start_saint_ex > end_saint_ex) or (end_saint_ex - start_saint_ex).value > 1:
+        # #     sys.exit('ERROR: Problem with start/end of night  on Saint-Ex !!')
+        # if self.telescope == 'Saint-Ex':
+        #     self.observability_table_day = observability_table(self.constraints, self.observatory, self.targets,
+        #                                                        time_range=Time([start_saint_ex.iso,
+        #                                                                         end_saint_ex.iso]))
+        # else:
+        #     self.observability_table_day = observability_table(self.constraints, self.observatory, self.targets,
+        #                                                        time_range=Time([start_between_civil_nautical.iso,
+        #                                                                         end_between_nautical_civil.iso]))
+        self.observability_table_day = observability_table(self.constraints, self.observatory, self.targets,
+                                                                time_range=Time([self.start_night.iso,
+                                                                                 self.end_night.iso]))
 
         self.observability_table_day['fraction of time observable'] = \
-            self.observability_table_day['fraction of time observable'] * self.night_duration(day).value * 24
+            self.observability_table_day['fraction of time observable'] * self.night_duration.value * 24
 
         is_visible_mid_night = is_observable(constraints, self.observatory, self.targets,
-                                             times=Time(start_between_civil_nautical +
-                                                        self.night_duration(day).value / 2))
+                                             times=Time(self.start_night +
+                                                        self.night_duration.value / 2))
 
         idx_not_visible_mid_night = np.where((is_visible_mid_night == False))
 

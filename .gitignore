@@ -192,3 +192,5 @@ _site/
 .DS_Store
 
 Notebooks/
+
+./SPOCK/__pychache__

@@ -750,7 +750,7 @@ class Schedules:
         except TypeError:
             sys.exit(Fore.RED + 'ERROR:  ' + Fore.BLACK + ' No block to insert ')
         except IndexError:
-            sys.exit(Fore.RED + 'ERROR:  ' + Fore.BLACK + ' No block to insert, it could be that the moon is too close. ')
+            sys.exit(Fore.RED + 'ERROR:  ' + Fore.BLACK + ' No block to insert, it could be that the target is not visible or the moon is too close. ')
         if self.SS1_night_blocks['target'][0] in self.scheduled_table['target']:
             sys.exit(Fore.RED + 'ERROR:  ' + Fore.BLACK + ' This target is already scheduled this day')
         for i in range(len(self.scheduled_table['target'])):
@@ -857,24 +857,6 @@ class Schedules:
                     self.scheduled_table['duration (minutes)'] = \
                         (Time(self.scheduled_table['end time (UTC)'][i]) -
                          Time(self.scheduled_table['start time (UTC)'][i])).value * 24 * 60
-
-                    # end_scheduled_table = end_scheduled_table.append(
-                    #     {'target': self.scheduled_table['target'][i] + '_2',
-                    #      'start time (UTC)':
-                    #          self.SS1_night_blocks['end time (UTC)'][0],
-                    #      'end time (UTC)': end_before_cut,
-                    #      'duration (minutes)': (Time(end_before_cut) - Time(
-                    #          self.SS1_night_blocks['end time (UTC)'][
-                    #              0])).value * 24 * 60,
-                    #      'ra (h)': self.scheduled_table['ra (h)'][i],
-                    #      'ra (m)': self.scheduled_table['ra (m)'][i],
-                    #      'ra (s)': self.scheduled_table['ra (s)'][i],
-                    #      'dec (d)': self.scheduled_table['dec (d)'][i],
-                    #      'dec (m)': self.scheduled_table['dec (m)'][i],
-                    #      'dec (s)': self.scheduled_table['dec (s)'][i],
-                    #      'configuration':
-                    #          self.scheduled_table['configuration'][i]},
-                    #     ignore_index=True)
                     
                     new_row = pd.DataFrame([{'target': self.scheduled_table['target'][i] + '_2',
                          'start time (UTC)':
@@ -937,22 +919,6 @@ class Schedules:
                 if self.SS1_night_blocks['start time (UTC)'][0] >= end_before_cut:
                     print(Fore.GREEN + 'INFO: ' + Fore.BLACK + ' situation 10, no change made to initial schedule')
 
-            # end_scheduled_table = end_scheduled_table.append({'target': self.SS1_night_blocks['target'][0],
-            #                                                   'start time (UTC)':
-            #                                                       self.SS1_night_blocks['start time (UTC)'][0],
-            #                                                   'end time (UTC)':
-            #                                                       self.SS1_night_blocks['end time (UTC)'][0],
-            #                                                   'duration (minutes)':
-            #                                                       self.SS1_night_blocks['duration (minutes)'][0],
-            #                                                   'ra (h)': self.SS1_night_blocks['ra (h)'][0],
-            #                                                   'ra (m)': self.SS1_night_blocks['ra (m)'][0],
-            #                                                   'ra (s)': self.SS1_night_blocks['ra (s)'][0],
-            #                                                   'dec (d)': self.SS1_night_blocks['dec (d)'][0],
-            #                                                   'dec (m)': self.SS1_night_blocks['dec (m)'][0],
-            #                                                   'dec (s)': self.SS1_night_blocks['dec (s)'][0],
-            #                                                   'configuration':
-            #                                                       self.SS1_night_blocks['configuration'][0]},
-            #                                                  ignore_index=True)
             new_row = pd.DataFrame([{'target': self.SS1_night_blocks['target'][0],
                                                               'start time (UTC)':
                                                                   self.SS1_night_blocks['start time (UTC)'][0],
@@ -970,22 +936,6 @@ class Schedules:
                                                                   self.SS1_night_blocks['configuration'][0]}])
             end_scheduled_table = pd.concat([end_scheduled_table, new_row], ignore_index=True)
 
-            # end_scheduled_table = end_scheduled_table.append({'target': self.scheduled_table['target'][i],
-            #                                                   'start time (UTC)':
-            #                                                       self.scheduled_table['start time (UTC)'][i],
-            #                                                   'end time (UTC)':
-            #                                                       self.scheduled_table['end time (UTC)'][i],
-            #                                                   'duration (minutes)':
-            #                                                       self.scheduled_table['duration (minutes)'][i],
-            #                                                   'ra (h)': self.scheduled_table['ra (h)'][i],
-            #                                                   'ra (m)': self.scheduled_table['ra (m)'][i],
-            #                                                   'ra (s)': self.scheduled_table['ra (s)'][i],
-            #                                                   'dec (d)': self.scheduled_table['dec (d)'][i],
-            #                                                   'dec (m)': self.scheduled_table['dec (m)'][i],
-            #                                                   'dec (s)': self.scheduled_table['dec (s)'][i],
-            #                                                   'configuration':
-            #                                                       self.scheduled_table['configuration'][i]},
-            #                                                  ignore_index=True)
             new_row = pd.DataFrame([{'target': self.scheduled_table['target'][i],
                                                               'start time (UTC)':
                                                                   self.scheduled_table['start time (UTC)'][i],
@@ -1109,55 +1059,14 @@ class Schedules:
         if day is None:
             print(Fore.GREEN + 'INFO: ' + Fore.BLACK + ' Not using moon phase in ETC')
 
-        # moon_phase = round(moon_illumination(Time(day.iso, out_subfmt='date')), 2)
-        # try:
-        #     spectral_type = round(float(target_list['SpT'][i].data.data[0]))
-        # except AttributeError:
-        #     try:
-        #         spectral_type = round(float(target_list['SpT'][i]))
-        #     except ValueError:
-        #         spectral_type = target_list['SpT'][i].values[0]
-        # except NotImplementedError:
-        #     try:
-        #         spectral_type = round(float(target_list['SpT'][i]))
-        #     except ValueError:
-        #         spectral_type = target_list['SpT'][i].values[0]
-        # if not isinstance(spectral_type, str):
-        #     if round(float(abs(target_list['SpT'][i]))) <= 9:
-        #         spt_type = 'M' + str(round(float(abs(target_list['SpT'][i]))))
-        #         if spt_type == 'M3':
-        #             spt_type = 'M2'
-        #     if round(float(abs(target_list['SpT'][i]))) <= 2:
-        #         spt_type = 'M2'
-        #     elif round(float(abs(target_list['SpT'][i]))) == 12:
-        #         spt_type = 'L2'
-        #     elif round(float(abs(target_list['SpT'][i]))) == 10:
-        #         spt_type = 'M9'
-        #     elif round(float(abs(target_list['SpT'][i]))) == 11:
-        #         spt_type = 'L2'
-        #     elif round(float(abs(target_list['SpT'][i]))) == 13:
-        #         spt_type = 'L2'
-        #     elif round(float(abs(target_list['SpT'][i]))) == 14:
-        #         spt_type = 'L5'
-        #     elif round(float(abs(target_list['SpT'][i]))) > 14:
-        #         spt_type = 'L8'
-        # else:
-        #     spt_type = spectral_type
-
-        filt_ = target_list['Filter_spc'][i].values[0]
-        if (filt_ == 'z\'') or (filt_ == 'r\'') or (filt_ == 'i\'') or (filt_ == 'g\''):
-            filt_ = filt_.replace('\'', '')
-        if filt_ != 'I+z':
-            filters = [filt_] + ['I+z', 'z', 'i', 'r']
-        else:
-            filters = ['I+z', 'z', 'i', 'r']
-        filt_idx = 0
-        filt_ = filters[filt_idx]
-        #texp = 0
 
         if self.telescope == 'Callisto':
+            #filters list
+            # possible filters = ['zYJ','J','H']
+
+            #mphot computation
             efficiencyFile_SPIRIT = path_spock + '/../mphot/resources/systems/speculoos_PIRT_1280SciCam_-60.csv'
-            filterFile_SPIRIT = path_spock + '/../mphot/resources/filters/zYJ.csv'
+            filterFile_SPIRIT = path_spock + '/../mphot/resources/filters/'+filt_+'.csv'
             # name to refer to the generated file
             name_SPIRIT, system_response_SPIRIT = mphot.generate_system_response(
                 efficiencyFile_SPIRIT, filterFile_SPIRIT
@@ -1190,7 +1099,20 @@ class Schedules:
             filt_ = 'zYJ'
 
         else:
+            #filters list
+            filt_ = target_list['Filter_spc'][i].values[0]
+            if (filt_ == 'z\'') or (filt_ == 'r\'') or (filt_ == 'i\'') or (filt_ == 'g\''):
+                filt_ = filt_.replace('\'', '')
+            if filt_ != 'I+z':
+                filters = [filt_] + ['I+z', 'z', 'i', 'r', 'g']
+            else:
+                filters = ['I+z', 'z', 'i', 'r', 'g']
+            filt_idx = 0
             filt_ = filters[filt_idx]
+            #texp = 0
+            filt_ = filters[filt_idx]
+
+            #mphot computation
             efficiencyFile_ANDOR = path_spock + '/../mphot/resources/systems/speculoos_Andor_iKon-L-936_-60.csv'
             filterFile_ANDOR = path_spock + '/../mphot/resources/filters/'+str(filt_)+'.csv'
             # name to refer to the generated file
@@ -1227,6 +1149,9 @@ class Schedules:
                 print(Fore.GREEN + 'INFO: ' + Fore.BLACK + ' Re-running the grid for mphot, can take 30s')
                 andor = mphot.get_precision_gaia(props_telescope_ANDOR, props_sky, source_id=target_list["Gaia_ID"][i].values[0],
                                             Teff=target_list["Teff"][i].values[0], override_grid=True)
+            except TypeError:
+                sys.exit(Fore.RED + 'ERROR: ' + Fore.BLACK + ' Please make sure the Teff and Gaia ID are provided in the WG6 spreadsheet')
+                sys.exit(1)
             # extract exposure time
             image_precision, binned_precision, components = andor
             texp = int(components["t [s]"])
@@ -1269,88 +1194,7 @@ class Schedules:
                 image_precision, binned_precision, components = andor                
                 texp = int(components["t [s]"])
 
-                # if 0 < filt_idx <= 3:
-                #     print(Fore.YELLOW + 'WARNING: ' + Fore.BLACK + ' Change filter to avoid saturation!!')
-                #     filt_ = filters[filt_idx]
-                #     print(filt_)
-
-                # if self.telescope == 'Saint-Ex':
-                #     print(self.day_of_night)
-                #     moon_phase = round(moon_illumination(Time(self.day_of_night.iso, out_subfmt='date')), 2)
-                #     if float(target_list['J'][i]) != 0.:
-                #         a = (ETC.etc(mag_val=float(target_list['J'][i]), mag_band='J', spt=spt_type,
-                #                     filt=filt_, airmass=1.1, moonphase=moon_phase, irtf=0.8, num_tel=1,
-                #                     seeing=0.7, gain=3.48, temp_ccd=-70, observatory_altitude=2780))
-                #     else:
-                #         if (float(target_list['J'][i]) == 0.) and (float(target_list['V'][i]) != 0.):
-                #             a = (ETC.etc(mag_val=float(target_list['V'][i]), mag_band='V', spt=spt_type,
-                #                         filt=filt_, airmass=1.1, moonphase=moon_phase, irtf=0.8, num_tel=1,
-                #                         seeing=0.7, gain=3.48, temp_ccd=-70, observatory_altitude=2780))
-                #         else:
-                #             sys.exit('ERROR: You must precise Vmag or Jmag for this target')
-                #     texp = a.exp_time_calculator(ADUpeak=30000)[0]
-
-                # elif self.telescope == 'TN_Oukaimeden':
-                #     if float(target_list['J'][i]) != 0.:
-                #         a = (ETC.etc(mag_val=float(target_list['J'][i]), mag_band='J', spt=spt_type,
-                #                     filt=filt_, airmass=1.1, moonphase=0.5, irtf=0.8, num_tel=1, seeing=1.0, gain=1.1))
-                #     else:
-                #         if (float(target_list['J'][i]) == 0.) and (float(target_list['V'][i]) != 0.):
-                #             a = (ETC.etc(mag_val=float(target_list['J'][i]), mag_band='J', spt=spt_type,
-                #                         filt=filt_, airmass=1.1, moonphase=0.5, irtf=0.8, num_tel=1, seeing=1.0, gain=1.1))
-                #         else:
-                #             sys.exit('ERROR: You must precise Vmag or Jmag for this target')
-                #     texp = a.exp_time_calculator(ADUpeak=50000)[0]
-                #     print(Fore.YELLOW + 'WARNING: ' + Fore.BLACK +
-                #         ' Don\'t forget to  calculate exposure time for TRAPPIST observations!!')
-
-                # elif self.telescope == 'TS_La_Silla':
-                #     if float(target_list['J'][i]) != 0.:
-                #         a = (ETC.etc(mag_val=target_list['J'][i], mag_band='J', spt=spt_type, filt=filt_,
-                #                     airmass=1.1, moonphase=0.5, irtf=0.8, num_tel=1, seeing=1.4, gain=1.1))
-                #     else:
-                #         if (float(target_list['J'][i]) == 0.) and (float(target_list['V'][i]) != 0.):
-                #             a = (ETC.etc(mag_val=target_list['V'][i], mag_band='V', spt=spt_type, filt=filt_,
-                #                         airmass=1.1, moonphase=0.5, irtf=0.8, num_tel=1, seeing=1.4, gain=1.1))
-                #         else:
-                #             sys.exit('ERROR: You must precise Vmag or Jmag for ' + str(target_list['Sp_ID'][i]))
-                #     texp = a.exp_time_calculator(ADUpeak=50000)[0]
-                #     print(Fore.YELLOW + 'WARNING: ' + Fore.BLACK + ' Don\'t forget to  '
-                #                                                 'calculate exposure time for TRAPPIST observations!!')
-
-                # elif self.telescope == 'Artemis':
-                #     if float(target_list['J'][i]) != 0.:
-                #         a = (ETC.etc(mag_val=float(target_list['J'][i]), mag_band='J', spt=spt_type,
-                #                     filt=filt_, airmass=1.1, moonphase=0.5, irtf=0.8, num_tel=1, seeing=0.7, gain=1.1))
-                #     else:
-                #         if (float(target_list['J'][i]) == 0.) and (float(target_list['V'][i]) != 0.):
-                #             a = (ETC.etc(mag_val=float(target_list['V'][i]), mag_band='V', spt=spt_type,
-                #                         filt=filt_, airmass=1.1, moonphase=0.5, irtf=0.8, num_tel=1, seeing=0.7, gain=1.1))
-                #         else:
-                #             sys.exit('ERROR: You must precise Vmag or Jmag for this target')
-                #     texp = a.exp_time_calculator(ADUpeak=45000)[0]
-
-                # elif self.telescope == 'Io' or self.telescope == 'Europa' \
-                #         or self.telescope == 'Ganymede' or self.telescope == 'Callisto':
-                #     if float(target_list['J'][i]) != 0.:
-                #         a = (ETC.etc(mag_val=float(target_list['J'][i]), mag_band='J', spt=spt_type,
-                #                     filt=filt_, airmass=1.1, moonphase=0.5, irtf=0.8, num_tel=1, seeing=0.7, gain=1.1))
-                #     else:
-                #         if (float(target_list['J'][i]) == 0.) and (float(target_list['V'][i]) != 0.):
-                #             a = (ETC.etc(mag_val=float(target_list['V'][i]), mag_band='V', spt=spt_type,
-                #                         filt=filt_, airmass=1.1, moonphase=0.5, irtf=0.8, num_tel=1, seeing=0.7, gain=1.1))
-                #         else:
-                #             sys.exit('ERROR: You must precise Vmag or Jmag for this target')
-                #     texp = a.exp_time_calculator(ADUpeak=45000)[0]
-
-                # if filt_idx > 3:
-                #     print(Fore.RED + 'ERROR:  ' + Fore.BLACK + ' You have to defocus in we want to observe this target')
-                #     texp = 10.0001
-                #     filt_ = 'r'
-
-                # filt_idx += 1
-
-                if self.telescope == 'Artemis':
+                if self.telescope == 'Artemis': # Artemis plans do not want '
                     filt_ = filt_.replace('\'', '')
 
 

@@ -1518,8 +1518,8 @@ class Schedules:
         horizon_for_set_and_rise = -12 * u.degree # degrees
 
         if self.telescope == 'Saint-Ex':
-            self.start_night = self.observatory.sun_set_time(day, which='next', horizon=-8.19).jd
-            self.end_night = self.observatory.sun_rise_time(day, which='next', horizon=-8.19).jd
+            self.start_night = self.observatory.sun_set_time(day, which='next', horizon=-8.19* u.degree).jd
+            self.end_night = self.observatory.sun_rise_time(day, which='next', horizon=-8.19* u.degree).jd
             start_night_start_saint_ex = Time(self.observatory.sun_set_time(day, which='next',
                                                                             horizon=-8.19 * u.degree).iso)
             if start_night_start_saint_ex < day:
@@ -1635,9 +1635,10 @@ class Schedules:
             self.priority['priority'][self.idx_planned_sso] = 0
 
         # try:
-        #     read_exposure_time_table = pd.read_csv(path_spock + '/SPOCK_files/exposure_time_table.csv', sep=',')
+        #     read_exposure_time_table = pd.read_csv(path_spock + '/SPOCK_files/exposure_time_table_etc.csv', sep=',')
         # except FileNotFoundError:
         #     self.exposure_time_table(day)
+
         #     read_exposure_time_table = pd.read_csv(path_spock + '/SPOCK_files/exposure_time_table.csv', sep=',')
         # if self.observatory.name == 'SSO':
         #     texp = read_exposure_time_table['SSO_texp']
@@ -1868,6 +1869,9 @@ class Schedules:
 
         dt_1day = Time('2018-01-02 00:00:00', scale='tcg') - Time('2018-01-01 00:00:00', scale='tcg')
         delta_day = (day - self.date_range[0]).value
+        self.idx_first_target =  np.where(self.target_table_spc['Sp_ID'] == self.first_target['target_name'])[0]
+        if self.second_target is not None:
+            self.idx_second_target =  np.where(self.target_table_spc['Sp_ID'] == self.second_target['target_name'])[0]
 
         if self.idx_second_target is not None:
             shift = max(self.shift_hours_observation(self.idx_first_target),
@@ -2619,187 +2623,272 @@ class Schedules:
             exposure time
 
         """
-        if telescope is not None:
-            self.telescope = telescope
-        if day is None:
-            print(Fore.GREEN + 'INFO: ' + Fore.BLACK + ' Not using moon phase in ETC')
+        if telescope is None:
+            telescope = self.telescope
+        # if day is None:
+        #     print(Fore.GREEN + 'INFO: ' + Fore.BLACK + ' Not using moon phase in ETC')
 
         # moon_phase = round(moon_illumination(day), 2)
 
-        try:
-            spectral_type = round(float(self.target_table_spc['SpT'][i].data.data[0]))
-        except AttributeError:
-            try:
-                spectral_type = round(float(self.target_table_spc['SpT'][i]))
-            except ValueError:
-                spectral_type = self.target_table_spc['SpT'][i].values[0]
-        except NotImplementedError:
-            try:
-                spectral_type = round(float(self.target_table_spc['SpT'][i]))
-            except ValueError:
-                spectral_type = self.target_table_spc['SpT'][i].values[0]
-        if not isinstance(spectral_type, str):
-            if round(float(abs(self.target_table_spc['SpT'][i]))) <= 9:
-                spt_type = 'M' + str(round(float(abs(self.target_table_spc['SpT'][i]))))
-                if spt_type == 'M3':
-                    spt_type = 'M2'
-            if round(float(abs(self.target_table_spc['SpT'][i]))) <= 2:
-                spt_type = 'M2'
-            elif round(float(abs(self.target_table_spc['SpT'][i]))) == 12:
-                spt_type = 'L2'
-            elif round(float(abs(self.target_table_spc['SpT'][i]))) == 10:
-                spt_type = 'M9'
-            elif round(float(abs(self.target_table_spc['SpT'][i]))) == 11:
-                spt_type = 'L2'
-            elif round(float(abs(self.target_table_spc['SpT'][i]))) == 13:
-                spt_type = 'L2'
-            elif round(float(abs(self.target_table_spc['SpT'][i]))) == 14:
-                spt_type = 'L5'
-            elif round(float(abs(self.target_table_spc['SpT'][i]))) > 14:
-                spt_type = 'L8'
+        #mphot 
+        Teff_target = int(self.target_table_spc['teff'][i]) # #K
+        gaia_id = int(self.target_table_spc['Gaia_ID'][i]) #gaia
+
+        if telescope == 'Callisto':
+            # files used to generate SR
+            efficiencyFile_SPIRIT = path_spock + '/../mphot/resources/systems/speculoos_PIRT_1280SciCam_-60.csv'
+            filterFile_SPIRIT = path_spock + '/../mphot/resources/filters/zYJ.csv'
+            # name to refer to the generated file
+            name_SPIRIT, system_response_SPIRIT = mphot.generate_system_response(
+                efficiencyFile_SPIRIT, filterFile_SPIRIT
+            )
+            # sky properties
+            props_sky = {
+                "pwv": 2.5,  # PWV [mm]
+                "airmass": 1.1,  # airmass
+                "seeing": 1.,  # seeing (==FWHM) ["]
+            }
+            props_callisto = {
+                "name": name_SPIRIT,
+                "plate_scale": 0.35 * (12 / 13.5),
+                "N_dc": 230,
+                "N_rn": 80,
+                "well_depth": 55000,
+                "bias_level": 0,
+                "well_fill": 0.7,
+                "read_time": 0.1,
+                "r0": 0.5,
+                "r1": 0.14,
+                "ap_rad": 3
+            }
+
+            # get the precision and components used to calculate it (generates grid if not already present)
+            result = mphot.get_precision_gaia(
+                props_callisto, props_sky, source_id=gaia_id, Teff=Teff_target
+            )
+            # extract exposure time
+            image_precision, binned_precision, components = result
+            exposure_time = components["t [s]"]
+
         else:
-            spt_type = spectral_type
+            efficiencyFile_ANDOR = path_spock + '/../mphot/resources/systems/speculoos_Andor_iKon-L-936_-60.csv'
+            filterFile_ANDOR = path_spock + '/../mphot/resources/filters/I+z.csv'
 
-        filt_ = str(self.target_table_spc['Filter_spc'][i])
-        if (filt_ == 'z\'') or (filt_ == 'r\'') or (filt_ == 'i\'') or (filt_ == 'g\''):
-            filt_ = filt_.replace('\'', '')
-        filters = ['I+z', 'z', 'i', 'r']
-        filt_idx = 0
-        filt_ = filters[filt_idx]
-        texp = 0
+            # name to refer to the generated file
+            name_ANDOR, system_response_ANDOR = mphot.generate_system_response(
+                efficiencyFile_ANDOR, filterFile_ANDOR
+            )
 
-        if self.telescope == 'Callisto': # using mphot for SPIRIT, filter is zYJ by default
+            # sky properties
+            props_sky = {
+                "pwv": 2.5,  # PWV [mm]
+                "airmass": 1.1,  # airmass
+                "seeing": 1.,  # seeing (==FWHM) ["]
+            }
 
-                # example files used to generate SR
-                efficiencyFile2 = path_spock + '/SPOCK/files_ETC/SPIRIT/datafiles/systems/pirtSPC_-60.csv'
-                filterFile2 = path_spock + '/SPOCK/files_ETC/SPIRIT/datafiles/filters/zYJ.csv'
+            # instrument properties
+            props_telescope = {
+                "name": name_ANDOR,  # name to get SR/precision grid from file
+                "plate_scale": 0.35,  # pixel plate scale ["]
+                "N_dc": 0.2,  # dark current [e/pix/s]
+                "N_rn": 6.328,  # read noise [e_rms/pix]
+                "well_depth": 64000,  # well depth [e/pix]
+                "well_fill": 0.7,  # fractional value to fill central target pixel, assuming gaussian (width function of seeing^)
+                "read_time": 10.5,  # read time between images [s]
+                "r0": 0.5,  # radius of telescope's primary mirror [m]
+                "r1": 0.14,  # radius of telescope's secondary mirror [m]
+                # "min_exp" : 0,          # optional, minimum exposure time [s]
+                # "max_exp" : 120,        # optional, maximum exposure time [s]
+                # "ap_rad" : 3            # optional, aperture radius [FWHM, seeing] for photometry -- 3 default == 7 sigma of Gaussian
+            }
 
-                # name to refer to the generated file
-                name, system_response = mphot.generate_system_response(
-                    efficiencyFile2, filterFile2
-                )
+            # get the precision and components used to calculate it (generates grid if not already present)
+            try:
+                result = mphot.get_precision_gaia(props_telescope, props_sky, source_id=gaia_id, Teff=Teff_target)
+            except FileNotFoundError:
+                print(Fore.GREEN + 'INFO: ' + Fore.BLACK + ' Re-running the grid for mphot, can take 30s')
+                result = mphot.get_precision_gaia(props_telescope, props_sky, source_id=gaia_id, Teff=Teff_target, override_grid=True)
+            # extract exposure time
+            image_precision, binned_precision, components = result
+            exposure_time = components["t [s]"]
+
+        texp = exposure_time
 
 
-                # sky properties
-                props_sky = {
-                    "pwv": 2.5,  # PWV [mm]
-                    "airmass": 1.1,  # airmass
-                    "seeing": 1.10,  # seeing (==FWHM) ["]
-                }
-                # telescope properties
-                props_callisto = {
-                    "name": name,
-                    "plate_scale": 0.35 * (12 / 13.5),
-                    "N_dc": 230,
-                    "N_rn": 80,
-                    "well_depth": 55000,
-                    "bias_level": 0,
-                    "well_fill": 0.7,
-                    "read_time": 0.1,
-                    "r0": 0.5,
-                    "r1": 0.14,
-                    "ap_rad": 3
-                }
+        # try:
+        #     spectral_type = round(float(self.target_table_spc['SpT'][i].data.data[0]))
+        # except AttributeError:
+        #     try:
+        #         spectral_type = round(float(self.target_table_spc['SpT'][i]))
+        #     except ValueError:
+        #         spectral_type = self.target_table_spc['SpT'][i].values[0]
+        # except NotImplementedError:
+        #     try:
+        #         spectral_type = round(float(self.target_table_spc['SpT'][i]))
+        #     except ValueError:
+        #         spectral_type = self.target_table_spc['SpT'][i].values[0]
+        # if not isinstance(spectral_type, str):
+        #     if round(float(abs(self.target_table_spc['SpT'][i]))) <= 9:
+        #         spt_type = 'M' + str(round(float(abs(self.target_table_spc['SpT'][i]))))
+        #         if spt_type == 'M3':
+        #             spt_type = 'M2'
+        #     if round(float(abs(self.target_table_spc['SpT'][i]))) <= 2:
+        #         spt_type = 'M2'
+        #     elif round(float(abs(self.target_table_spc['SpT'][i]))) == 12:
+        #         spt_type = 'L2'
+        #     elif round(float(abs(self.target_table_spc['SpT'][i]))) == 10:
+        #         spt_type = 'M9'
+        #     elif round(float(abs(self.target_table_spc['SpT'][i]))) == 11:
+        #         spt_type = 'L2'
+        #     elif round(float(abs(self.target_table_spc['SpT'][i]))) == 13:
+        #         spt_type = 'L2'
+        #     elif round(float(abs(self.target_table_spc['SpT'][i]))) == 14:
+        #         spt_type = 'L5'
+        #     elif round(float(abs(self.target_table_spc['SpT'][i]))) > 14:
+        #         spt_type = 'L8'
+        # else:
+        #     spt_type = spectral_type
 
-                gaia_id = int(self.target_table_spc['Gaia_ID'][i])
-                Teff_target = float(self.target_table_spc['teff'][i])
+        # filt_ = str(self.target_table_spc['Filter_spc'][i])
+        # if (filt_ == 'z\'') or (filt_ == 'r\'') or (filt_ == 'i\'') or (filt_ == 'g\''):
+        #     filt_ = filt_.replace('\'', '')
+        # filters = ['I+z', 'z', 'i', 'r']
+        # filt_idx = 0
+        # filt_ = filters[filt_idx]
+        # texp = 0
+
+        # if self.telescope == 'Callisto': # using mphot for SPIRIT, filter is zYJ by default
+
+        #         # example files used to generate SR
+        #         efficiencyFile2 = path_spock + '/SPOCK/files_ETC/SPIRIT/datafiles/systems/pirtSPC_-60.csv'
+        #         filterFile2 = path_spock + '/SPOCK/files_ETC/SPIRIT/datafiles/filters/zYJ.csv'
+
+        #         # name to refer to the generated file
+        #         name, system_response = mphot.generate_system_response(
+        #             efficiencyFile2, filterFile2
+        #         )
+
+
+        #         # sky properties
+        #         props_sky = {
+        #             "pwv": 2.5,  # PWV [mm]
+        #             "airmass": 1.1,  # airmass
+        #             "seeing": 1.10,  # seeing (==FWHM) ["]
+        #         }
+        #         # telescope properties
+        #         props_callisto = {
+        #             "name": name,
+        #             "plate_scale": 0.35 * (12 / 13.5),
+        #             "N_dc": 230,
+        #             "N_rn": 80,
+        #             "well_depth": 55000,
+        #             "bias_level": 0,
+        #             "well_fill": 0.7,
+        #             "read_time": 0.1,
+        #             "r0": 0.5,
+        #             "r1": 0.14,
+        #             "ap_rad": 3
+        #         }
+
+        #         gaia_id = int(self.target_table_spc['Gaia_ID'][i])
+        #         Teff_target = float(self.target_table_spc['teff'][i])
             
-                # get the precision and components used to calculate it (generates grid if not already present)
-                result = mphot.get_precision_gaia(
-                    props_callisto, props_sky, source_id=gaia_id, Teff=Teff_target
-                )
+        #         # get the precision and components used to calculate it (generates grid if not already present)
+        #         result = mphot.get_precision_gaia(
+        #             props_callisto, props_sky, source_id=gaia_id, Teff=Teff_target
+        #         )
 
-                image_precision, binned_precision, components = result
-                exposure_time = components["t [s]"]
-                texp = int(exposure_time)
-                print(Fore.GREEN + 'INFO: ' + Fore.BLACK + f"Telescope is Callisto (equipped with SPIRIT), using mphot with Teff = {int(Teff_target)} and Gaia ID = {gaia_id:.0f}, exposure time = {texp} sec")
-                filt_ = 'zYJ'
+        #         image_precision, binned_precision, components = result
+        #         exposure_time = components["t [s]"]
+        #         texp = int(exposure_time)
+        #         print(Fore.GREEN + 'INFO: ' + Fore.BLACK + f"Telescope is Callisto (equipped with SPIRIT), using mphot with Teff = {int(Teff_target)} and Gaia ID = {gaia_id:.0f}, exposure time = {texp} sec")
+        #         filt_ = 'zYJ'
 
-        else: # ANDOR Artemis, Saint-Ex, TN_Oukaimeden, TS_La_Silla
-            while texp < 10:
-                if 0 < filt_idx <= 3:
-                    print(Fore.YELLOW + 'WARNING: ' + Fore.BLACK + ' Change filter to avoid saturation with ANDOR !!')
-                    filt_ = filters[filt_idx]
+        # else: # ANDOR Artemis, Saint-Ex, TN_Oukaimeden, TS_La_Silla
+        #     while texp < 10:
+        #         if 0 < filt_idx <= 3:
+        #             print(Fore.YELLOW + 'WARNING: ' + Fore.BLACK + ' Change filter to avoid saturation with ANDOR !!')
+        #             filt_ = filters[filt_idx]
 
-                if self.telescope == 'Saint-Ex':
-                    moon_phase = round(moon_illumination(day), 2)
-                    if float(self.target_table_spc['J'][i]) != 0.:
-                        a = (ETC.etc(mag_val=float(self.target_table_spc['J'][i]), mag_band='J', spt=spt_type,
-                                    filt=filt_, airmass=1.1, moonphase=moon_phase, irtf=0.8, num_tel=1,
-                                    seeing=0.7, gain=3.48, temp_ccd=-70, observatory_altitude=2780))
-                    else:
-                        if (float(self.target_table_spc['J'][i]) == 0.) and (float(self.target_table_spc['V'][i]) != 0.):
-                            a = (ETC.etc(mag_val=float(self.target_table_spc['V'][i]), mag_band='V', spt=spt_type,
-                                        filt=filt_, airmass=1.1, moonphase=moon_phase, irtf=0.8, num_tel=1,
-                                        seeing=0.7, gain=3.48, temp_ccd=-70, observatory_altitude=2780))
-                        else:
-                            sys.exit('ERROR: You must precise Vmag or Jmag for this target')
-                    texp = a.exp_time_calculator(ADUpeak=30000)[0]
+        #         if self.telescope == 'Saint-Ex':
+        #             moon_phase = round(moon_illumination(day), 2)
+        #             if float(self.target_table_spc['J'][i]) != 0.:
+        #                 a = (ETC.etc(mag_val=float(self.target_table_spc['J'][i]), mag_band='J', spt=spt_type,
+        #                             filt=filt_, airmass=1.1, moonphase=moon_phase, irtf=0.8, num_tel=1,
+        #                             seeing=0.7, gain=3.48, temp_ccd=-70, observatory_altitude=2780))
+        #             else:
+        #                 if (float(self.target_table_spc['J'][i]) == 0.) and (float(self.target_table_spc['V'][i]) != 0.):
+        #                     a = (ETC.etc(mag_val=float(self.target_table_spc['V'][i]), mag_band='V', spt=spt_type,
+        #                                 filt=filt_, airmass=1.1, moonphase=moon_phase, irtf=0.8, num_tel=1,
+        #                                 seeing=0.7, gain=3.48, temp_ccd=-70, observatory_altitude=2780))
+        #                 else:
+        #                     sys.exit('ERROR: You must precise Vmag or Jmag for this target')
+        #             texp = a.exp_time_calculator(ADUpeak=30000)[0]
 
-                elif self.telescope == 'TN_Oukaimeden':
-                    if float(self.target_table_spc['J'][i]) != 0.:
-                        a = (ETC.etc(mag_val=float(self.target_table_spc['J'][i]), mag_band='J', spt=spt_type,
-                                    filt=filt_, airmass=1.1, moonphase=0.5, irtf=0.8, num_tel=1, seeing=1.0, gain=1.1))
-                    else:
-                        if (float(self.target_table_spc['J'][i]) == 0.) and (float(self.target_table_spc['V'][i]) != 0.):
-                            a = (ETC.etc(mag_val=float(self.target_table_spc['J'][i]), mag_band='J', spt=spt_type,
-                                        filt=filt_, airmass=1.1, moonphase=0.5, irtf=0.8, num_tel=1, seeing=1.0, gain=1.1))
-                        else:
-                            sys.exit('ERROR: You must precise Vmag or Jmag for this target')
-                    texp = a.exp_time_calculator(ADUpeak=50000)[0]
-                    print(Fore.YELLOW + 'WARNING: ' + Fore.BLACK +
-                        ' Don\'t forget to  calculate exposure time for TRAPPIST observations!!')
+        #         elif self.telescope == 'TN_Oukaimeden':
+        #             if float(self.target_table_spc['J'][i]) != 0.:
+        #                 a = (ETC.etc(mag_val=float(self.target_table_spc['J'][i]), mag_band='J', spt=spt_type,
+        #                             filt=filt_, airmass=1.1, moonphase=0.5, irtf=0.8, num_tel=1, seeing=1.0, gain=1.1))
+        #             else:
+        #                 if (float(self.target_table_spc['J'][i]) == 0.) and (float(self.target_table_spc['V'][i]) != 0.):
+        #                     a = (ETC.etc(mag_val=float(self.target_table_spc['J'][i]), mag_band='J', spt=spt_type,
+        #                                 filt=filt_, airmass=1.1, moonphase=0.5, irtf=0.8, num_tel=1, seeing=1.0, gain=1.1))
+        #                 else:
+        #                     sys.exit('ERROR: You must precise Vmag or Jmag for this target')
+        #             texp = a.exp_time_calculator(ADUpeak=50000)[0]
+        #             print(Fore.YELLOW + 'WARNING: ' + Fore.BLACK +
+        #                 ' Don\'t forget to  calculate exposure time for TRAPPIST observations!!')
 
-                elif self.telescope == 'TS_La_Silla':
-                    if float(self.target_table_spc['J'][i]) != 0.:
-                        a = (ETC.etc(mag_val=self.target_table_spc['J'][i], mag_band='J', spt=spt_type, filt=filt_,
-                                    airmass=1.1, moonphase=0.5, irtf=0.8, num_tel=1, seeing=1.4, gain=1.1))
-                    else:
-                        if (float(self.target_table_spc['J'][i]) == 0.) and (float(self.target_table_spc['V'][i]) != 0.):
-                            a = (ETC.etc(mag_val=self.target_table_spc['V'][i], mag_band='V', spt=spt_type, filt=filt_,
-                                        airmass=1.1, moonphase=0.5, irtf=0.8, num_tel=1, seeing=1.4, gain=1.1))
-                        else:
-                            sys.exit('ERROR: You must precise Vmag or Jmag for ' + str(self.target_table_spc['Sp_ID'][i]))
-                    texp = a.exp_time_calculator(ADUpeak=50000)[0]
-                    print(Fore.YELLOW + 'WARNING: ' + Fore.BLACK + ' Don\'t forget to  '
-                                                                'calculate exposure time for TRAPPIST observations!!')
+        #         elif self.telescope == 'TS_La_Silla':
+        #             if float(self.target_table_spc['J'][i]) != 0.:
+        #                 a = (ETC.etc(mag_val=self.target_table_spc['J'][i], mag_band='J', spt=spt_type, filt=filt_,
+        #                             airmass=1.1, moonphase=0.5, irtf=0.8, num_tel=1, seeing=1.4, gain=1.1))
+        #             else:
+        #                 if (float(self.target_table_spc['J'][i]) == 0.) and (float(self.target_table_spc['V'][i]) != 0.):
+        #                     a = (ETC.etc(mag_val=self.target_table_spc['V'][i], mag_band='V', spt=spt_type, filt=filt_,
+        #                                 airmass=1.1, moonphase=0.5, irtf=0.8, num_tel=1, seeing=1.4, gain=1.1))
+        #                 else:
+        #                     sys.exit('ERROR: You must precise Vmag or Jmag for ' + str(self.target_table_spc['Sp_ID'][i]))
+        #             texp = a.exp_time_calculator(ADUpeak=50000)[0]
+        #             print(Fore.YELLOW + 'WARNING: ' + Fore.BLACK + ' Don\'t forget to  '
+        #                                                         'calculate exposure time for TRAPPIST observations!!')
 
-                elif self.telescope == 'Artemis':
-                    if float(self.target_table_spc['J'][i]) != 0.:
-                        a = (ETC.etc(mag_val=float(self.target_table_spc['J'][i]), mag_band='J', spt=spt_type,
-                                    filt=filt_, airmass=1.1, moonphase=0.5, irtf=0.8, num_tel=1, seeing=0.7, gain=1.1))
-                    else:
-                        if (float(self.target_table_spc['J'][i]) == 0.) and (float(self.target_table_spc['V'][i]) != 0.):
-                            a = (ETC.etc(mag_val=float(self.target_table_spc['V'][i]), mag_band='V', spt=spt_type,
-                                        filt=filt_, airmass=1.1, moonphase=0.5, irtf=0.8, num_tel=1, seeing=0.7, gain=1.1))
-                        else:
-                            sys.exit('ERROR: You must precise Vmag or Jmag for this target')
-                    texp = a.exp_time_calculator(ADUpeak=45000)[0]
+        #         elif self.telescope == 'Artemis':
+        #             if float(self.target_table_spc['J'][i]) != 0.:
+        #                 a = (ETC.etc(mag_val=float(self.target_table_spc['J'][i]), mag_band='J', spt=spt_type,
+        #                             filt=filt_, airmass=1.1, moonphase=0.5, irtf=0.8, num_tel=1, seeing=0.7, gain=1.1))
+        #             else:
+        #                 if (float(self.target_table_spc['J'][i]) == 0.) and (float(self.target_table_spc['V'][i]) != 0.):
+        #                     a = (ETC.etc(mag_val=float(self.target_table_spc['V'][i]), mag_band='V', spt=spt_type,
+        #                                 filt=filt_, airmass=1.1, moonphase=0.5, irtf=0.8, num_tel=1, seeing=0.7, gain=1.1))
+        #                 else:
+        #                     sys.exit('ERROR: You must precise Vmag or Jmag for this target')
+        #             texp = a.exp_time_calculator(ADUpeak=45000)[0]
 
-                elif self.telescope == 'Io' or self.telescope == 'Europa' \
-                        or self.telescope == 'Ganymede' :
-                    if float(self.target_table_spc['J'][i]) != 0.:
-                        a = (ETC.etc(mag_val=float(self.target_table_spc['J'][i]), mag_band='J', spt=spt_type,
-                                    filt=filt_, airmass=1.1, moonphase=0.5, irtf=0.8, num_tel=1, seeing=0.7, gain=1.1))
-                    else:
-                        if (float(self.target_table_spc['J'][i]) == 0.) and (float(self.target_table_spc['V'][i]) != 0.):
-                            a = (ETC.etc(mag_val=float(self.target_table_spc['V'][i]), mag_band='V', spt=spt_type,
-                                        filt=filt_, airmass=1.1, moonphase=0.5, irtf=0.8, num_tel=1, seeing=0.7, gain=1.1))
-                        else:
-                            sys.exit('ERROR: You must precise Vmag or Jmag for this target')
-                    texp = a.exp_time_calculator(ADUpeak=45000)[0]
+        #         elif self.telescope == 'Io' or self.telescope == 'Europa' \
+        #                 or self.telescope == 'Ganymede' :
+        #             if float(self.target_table_spc['J'][i]) != 0.:
+        #                 a = (ETC.etc(mag_val=float(self.target_table_spc['J'][i]), mag_band='J', spt=spt_type,
+        #                             filt=filt_, airmass=1.1, moonphase=0.5, irtf=0.8, num_tel=1, seeing=0.7, gain=1.1))
+        #             else:
+        #                 if (float(self.target_table_spc['J'][i]) == 0.) and (float(self.target_table_spc['V'][i]) != 0.):
+        #                     a = (ETC.etc(mag_val=float(self.target_table_spc['V'][i]), mag_band='V', spt=spt_type,
+        #                                 filt=filt_, airmass=1.1, moonphase=0.5, irtf=0.8, num_tel=1, seeing=0.7, gain=1.1))
+        #                 else:
+        #                     sys.exit('ERROR: You must precise Vmag or Jmag for this target')
+        #             texp = a.exp_time_calculator(ADUpeak=45000)[0]
 
-                if filt_idx > 3:
-                    print(Fore.RED + 'ERROR:  ' + Fore.BLACK + ' You have to defocus in we want to observe this target')
-                    texp = 10.0001
-                    filt_ = 'r'
+        #         if filt_idx > 3:
+        #             print(Fore.RED + 'ERROR:  ' + Fore.BLACK + ' You have to defocus in we want to observe this target')
+        #             texp = 10.0001
+        #             filt_ = 'r'
 
-                filt_idx += 1
-                if self.telescope == 'Artemis':
-                    filt_ = filt_.replace('\'', '')
+        #         filt_idx += 1
+        #         if self.telescope == 'Artemis':
+        #             filt_ = filt_.replace('\'', '')
 
 
-        self.target_table_spc['Filter_spc'][i] = filt_
+        # self.target_table_spc['Filter_spc'][i] = filt_
 
         return texp
 
@@ -2825,19 +2914,20 @@ class Schedules:
         saintex_texp = np.zeros(len(self.target_table_spc))
         ts_texp = np.zeros(len(self.target_table_spc))
         tn_texp = np.zeros(len(self.target_table_spc))
+
         for i in range(len(self.target_table_spc)):
             # print(i, self.target_table_spc['Sp_ID'][i])
             sso_texp[i] = self.exposure_time(day, i, 'Io')
             sso_spirit_texp[i] = self.exposure_time(day, i, 'Callisto')
-            sno_texp[i] = self.exposure_time(day, i, 'Artemis')
-            saintex_texp[i] = self.exposure_time(day, i, 'Saint-Ex')
-            ts_texp[i] = self.exposure_time(day, i, 'TS_La_Silla')
-            tn_texp[i] = self.exposure_time(day, i, 'TN_Oukaimeden')
+            sno_texp[i] = sso_texp[i] #self.exposure_time(day, i, 'Artemis')
+            saintex_texp[i] = sso_texp[i] #self.exposure_time(day, i, 'Saint-Ex')
+            # ts_texp[i] = self.exposure_time(day, i, 'TS_La_Silla')
+            # tn_texp[i] = self.exposure_time(day, i, 'TN_Oukaimeden')
 
             df = pd.DataFrame({'Sp_ID': self.target_table_spc['Sp_ID'],
                                'SSO_texp': sso_texp, 'SSO_SPIRIT_texp': sso_spirit_texp, 'SNO_texp': sno_texp,
-                               'Saintex_texp': saintex_texp, 'TS_texp': ts_texp, 'TN_texp': tn_texp, })
-            df.to_csv(path_spock + '/SPOCK_files/exposure_time_table.csv', sep=',', index=False)
+                               'Saintex_texp': saintex_texp,  })
+            df.to_csv(path_spock + '/SPOCK_files/exposure_time_table_mphot.csv', sep=',', index=False)
 
     def no_obs_with_different_tel(self):
         """ function to avoid observations of a similar target,

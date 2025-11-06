@@ -1311,7 +1311,7 @@ def read_night_block(telescope, day):
             str(telescope) + '_' + str(day_fmt) + '.txt',
             format='ascii')
     else:
-        nightb_url = "http://www.mrao.cam.ac.uk/SPECULOOS/Observations/" + telescope + '/schedule/Archive_night_blocks/night_blocks_' + \
+        nightb_url = "https://speculoos.withastra.io/SPECULOOS/Observations/" + telescope + '/schedule/Archive_night_blocks/night_blocks_' + \
                      telescope + '_' + day_fmt + '.txt'
         nightb = requests.get(nightb_url, auth=(user_portal, pwd_portal))
 
@@ -1319,8 +1319,7 @@ def read_night_block(telescope, day):
             sys.exit(Fore.RED + 'ERROR:  ' + Fore.BLACK + ' No plans on the server for this date')
         else:
             open(path_local, 'wb').write(nightb.content)
-            scheduler_table = pd.read_csv(path_local, delimiter=' ',
-                                          skipinitialspace=True, error_bad_lines=False)
+            scheduler_table = pd.read_csv(path_local, delimiter=' ', skipinitialspace=True,)
     return scheduler_table
 
 

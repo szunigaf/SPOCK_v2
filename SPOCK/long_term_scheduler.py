@@ -238,14 +238,12 @@ def sso_planned_targets(date_is, telescope):
         list of targets scheduled on this SSO telescope that  day
 
     """
-    if (telescope == 'Artemis') or (telescope == 'Saint-Ex') or (telescope == 'TS_La_Silla') or \
-            (telescope == 'TN_Oukaimeden'):
-        telescopes = ['Io', 'Europa', 'Ganymede', 'Callisto']
-    else:
-        telescopes = ['Io', 'Europa', 'Ganymede', 'Callisto']
-        telescopes = np.delete(telescopes, telescopes.index(telescope))
+    telescopes = ['Io', 'Europa', 'Ganymede', 'Callisto']
+    if telescope in telescopes:
+        telescopes.remove(telescope)
     targets_on_sso_telescopes = []
 
+    #local
     for i in range(len(telescopes)):
         night_block_str = '/night_blocks_' + telescopes[i] + '_' + str(date_is) + '.txt'
         path = path_spock + '/DATABASE/' + telescopes[i] + '/Archive_night_blocks/' + night_block_str
@@ -325,7 +323,6 @@ def sno_planned_targets(date_is):
 
 def saintex_planned_targets(date_is):
     """ tell which target are scheduled on SNO on a given day
-
     Parameters
     ----------
     date_is : date
@@ -1332,13 +1329,13 @@ class Schedules:
                 if self.idx_second_target is None:
                     print(Fore.YELLOW + 'WARNING: ' + Fore.BLACK + ' no second target')
 
-                self.night_block = self.schedule_blocks(day)
+                self.night_block = self.schedule_blocks(self.day)
 
                 if self.read_locked_target:
                     import SPOCK.short_term_scheduler as SPOCKST
                     schedule_short = SPOCKST.Schedules()
                     schedule_short.load_parameters()
-                    schedule_short.day_of_night = day
+                    schedule_short.day_of_night = self.day
                     schedule_short.observatory = self.observatory
                     schedule_short.telescope = self.telescope
                     try:
@@ -1356,7 +1353,7 @@ class Schedules:
                         pass
 
                 self.night_block_by_day.append(self.night_block)
-                self.make_night_block(day)
+                self.make_night_block(self.day)
                 #self.make_night_block(day)
 
         if str(self.strategy) == 'segmented':

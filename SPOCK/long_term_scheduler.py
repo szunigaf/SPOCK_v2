@@ -1308,7 +1308,7 @@ class Schedules:
                 # self.start_night = self.observatory.sun_set_time(self.day, which='next', horizon=horizon_for_set_and_rise)
                 # self.end_night = self.observatory.sun_rise_time(self.day, which='next', horizon=horizon_for_set_and_rise)
                 self.table_priority_prio(self.day)
-                 self.idx_nightly_targets(t=1)
+                self.idx_nightly_targets(t)
                 #self.update_hours(self.day,targets)
                 # if self.is_constraints_met_first_target(t):
                 #     self.first_target = self.priority[self.idx_first_target]
@@ -1358,7 +1358,7 @@ class Schedules:
         if str(self.strategy) == 'segmented':
             print()
 
-    def idx_nightly_targets(self, t=1):
+    def idx_nightly_targets(self, t):
         """
             Give the index of the first and second targets as well as the
             corresponding row in the priority table
@@ -1486,7 +1486,6 @@ class Schedules:
                         if self.priority['rise'].any() or self.priority['both'].any() :
                             if (set_second_target > self.end_night) and \
                                     (rise_second_target < set_first_target):
-                                print(i,"set, break")
                                 break
 
                             else:
@@ -1579,7 +1578,6 @@ class Schedules:
                         if self.priority['rise'].any() or self.priority['both'].any() :
                             if (set_second_target > self.end_night) and \
                                     (rise_second_target < set_first_target):
-                                print(i,"set, break")
                                 break
 
                             else:
@@ -1817,49 +1815,19 @@ class Schedules:
 
         dt_1day = Time('2018-01-02 00:00:00', scale='tcg') - Time('2018-01-01 00:00:00', scale='tcg')
         delta_day = (day - self.date_range[0]).value
-        self.idx_first_target =  np.where(self.target_table_spc['Sp_ID'] == self.first_target['target_name'])[0]
+        self.idx_first_target_spc =  np.where(self.target_table_spc['Sp_ID'] == self.first_target['target_name'])[0][0]
         if self.second_target is not None:
-            self.idx_second_target =  np.where(self.target_table_spc['Sp_ID'] == self.second_target['target_name'])[0]
+            self.idx_second_target_spc =  np.where(self.target_table_spc['Sp_ID'] == self.second_target['target_name'])[0][0]
 
-        if self.idx_second_target is not None:
-            shift = max(self.shift_hours_observation(self.idx_first_target),
-                        self.shift_hours_observation(self.idx_second_target)) / 24  # days
+        if self.idx_second_target_spc is not None:
+            shift = max(self.shift_hours_observation(self.first_target),
+                        self.shift_hours_observation(self.second_target)) / 24  # days
         else:
-            shift = self.shift_hours_observation(self.idx_first_target) / 24  # days
+            shift = self.shift_hours_observation(self.first_target) / 24  # days
 
-        dur_obs_both_target = self.night_duration(day).value * u.day
-        dur_obs_set_target = (self.night_duration(
-            day).value / 2 - shift / self.date_range_in_days) * u.day  # (self.night_duration(day)/(2*u.day))*u.day+1*((aa.value/30)*u.hour-t/(aa.value/2)*u.hour)
-        dur_obs_rise_target = (self.night_duration(
-            day).value / 2 + shift / self.date_range_in_days) * u.day  # (self.night_duration(day)/(2*u.day))*u.day-1*((aa.value/30)*u.hour-t/(aa.value/2)*u.hour)
-
-        # start_between_civil_nautical = Time((Time(
-        #     self.observatory.twilight_evening_nautical(day + dt_1day * 0,
-        #                                                which='next')).value +
-        #                                      Time(self.observatory.twilight_evening_civil(
-        #                                          day + dt_1day * 0,
-        #                                          which='next')).value) / 2,
-        #                                     format='jd')
-
-        # end_between_nautical_civil = Time((Time(
-        #     self.observatory.twilight_morning_nautical(day + dt_1day * (0 + 1),
-        #                                                which='nearest')).value +
-        #                                    Time(self.observatory.twilight_morning_civil(
-        #                                        day + dt_1day * (0 + 1),
-        #                                        which='nearest')).value) / 2,
-        #                                   format='jd')
-        # if self.telescope == "Artemis":
-        #     start_between_civil_nautical = Time(self.observatory.sun_set_time(day, which='next',
-        #                                                                       horizon=-12 * u.degree).iso)
-        #     end_between_nautical_civil = Time(self.observatory.sun_rise_time(day, which='next',
-        #                                                                      horizon=-12 * u.degree).iso)
-
-        # start_saint_ex = Time(self.observatory.sun_set_time(day, which='next',
-        #                                                     horizon=-8.19 * u.degree).iso)
-        # end_saint_ex = Time(self.observatory.sun_rise_time(day, which='next',
-        #                                                    horizon=-8.19 * u.degree).iso)
-        # if (start_saint_ex > end_saint_ex) or (end_saint_ex - start_saint_ex).value > 1:
-        #     sys.exit('ERROR: Problem with start/end of night  on Saint-Ex !!')
+        dur_obs_both_target = self.night_duration.jd * u.day
+        dur_obs_set_target = (self.night_duration.jd / 2 - shift / self.date_range_in_days) * u.day  # (self.night_duration(day)/(2*u.day))*u.day+1*((aa.value/30)*u.hour-t/(aa.value/2)*u.hour)
+        dur_obs_rise_target = (self.night_duration.jd / 2 + shift / self.date_range_in_days) * u.day  # (self.night_duration(day)/(2*u.day))*u.day-1*((aa.value/30)*u.hour-t/(aa.value/2)*u.hour)
 
         if self.telescope == 'Saint-Ex':
             constraints_set_target = self.constraints + [TimeConstraint(self.start_night,
@@ -1867,6 +1835,11 @@ class Schedules:
             constraints_rise_target = self.constraints + [TimeConstraint((self.start_night + dur_obs_set_target),
                                                                          self.end_night)]
             constraints_all = self.constraints + [TimeConstraint(self.start_night, self.end_night)]
+            
+            self.target_table_spc['texp_spc'][self.idx_first_target_spc] = self.exposure_time(day=day,
+                                                                                          i=self.idx_first_target_spc)
+            self.target_table_spc['texp_spc'][self.idx_second_target_spc] = self.exposure_time(day=day,
+                                                                                           i=self.idx_second_target_spc)
 
         else:
             constraints_set_target = self.constraints + [TimeConstraint(self.start_night,
@@ -1879,56 +1852,47 @@ class Schedules:
 
             constraints_all = self.constraints + [TimeConstraint(self.start_night,
                                                                  self.end_night)]
+            
+            self.target_table_spc['texp_spc'][self.idx_first_target_spc] = self.exposure_time(day=None,
+                                                                                          i=self.idx_first_target_spc)
+            self.target_table_spc['texp_spc'][self.idx_second_target_spc] = self.exposure_time(day=None,
+                                                                                           i=self.idx_second_target_spc)
 
         blocks = []
         # if self.target_table_spc['texp_spc'][self.idx_first_target] == 0:
-        if self.telescope == 'Saint-Ex':
-            self.target_table_spc['texp_spc'][self.idx_first_target] = self.exposure_time(day=day,
-                                                                                          i=self.idx_first_target)
-        else:
-            self.target_table_spc['texp_spc'][self.idx_first_target] = self.exposure_time(day=None,
-                                                                                          i=self.idx_first_target)
 
-        # if (self.idx_second_target is not None) and self.target_table_spc['texp_spc'][self.idx_second_target] == 0:
-        if self.telescope == 'Saint-Ex':
-            self.target_table_spc['texp_spc'][self.idx_second_target] = self.exposure_time(day=day,
-                                                                                           i=self.idx_second_target)
-        else:
-            self.target_table_spc['texp_spc'][self.idx_second_target] = self.exposure_time(day=None,
-                                                                                           i=self.idx_second_target)
-
-        if self.first_target['set or rise'] == 'set':
+        if self.first_target['set']:
             print(Fore.GREEN + 'INFO: ' + Fore.BLACK + ' First target is \'set\'')
-            a = ObservingBlock(self.targets[self.idx_first_target], dur_obs_set_target, -1,
+            a = ObservingBlock(self.targets[self.idx_first_target_spc], dur_obs_set_target, -1,
                                constraints=constraints_set_target,
-                               configuration={"filt": str(self.target_table_spc['Filter_spc'][self.idx_first_target]),
-                                              "texp": str(self.target_table_spc['texp_spc'][self.idx_first_target])})
+                               configuration={"filt": str(self.target_table_spc['Filter_spc'][self.idx_first_target_spc]),
+                                              "texp": str(self.target_table_spc['texp_spc'][self.idx_first_target_spc])})
             blocks.append(a)
-            b = ObservingBlock(self.targets[self.idx_second_target], dur_obs_rise_target, -1,
+            b = ObservingBlock(self.targets[self.idx_second_target_spc], dur_obs_rise_target, -1,
                                constraints=constraints_rise_target,
-                               configuration={"filt": str(self.target_table_spc['Filter_spc'][self.idx_second_target]),
-                                              "texp": str(self.target_table_spc['texp_spc'][self.idx_second_target])})
+                               configuration={"filt": str(self.target_table_spc['Filter_spc'][self.idx_second_target_spc]),
+                                              "texp": str(self.target_table_spc['texp_spc'][self.idx_second_target_spc])})
             blocks.append(b)
 
-        if self.first_target['set or rise'] == 'both':
+        if self.first_target['both']:
             print(Fore.GREEN + 'INFO: ' + Fore.BLACK + ' First target is \'both\'')
-            a = ObservingBlock(self.targets[self.idx_first_target], dur_obs_both_target, -1,
+            a = ObservingBlock(self.targets[self.idx_first_target_spc], dur_obs_both_target, -1,
                                constraints=constraints_all,
-                               configuration={"filt": str(self.target_table_spc['Filter_spc'][self.idx_first_target]),
-                                              "texp": str(self.target_table_spc['texp_spc'][self.idx_first_target])})
+                               configuration={"filt": str(self.target_table_spc['Filter_spc'][self.idx_first_target_spc]),
+                                              "texp": str(self.target_table_spc['texp_spc'][self.idx_first_target_spc])})
             blocks.append(a)
 
-        if self.first_target['set or rise'] == 'rise':
+        if self.first_target['rise']:
             print(Fore.GREEN + 'INFO: ' + Fore.BLACK + ' First target is \'rise\'')
-            b = ObservingBlock(self.targets[self.idx_second_target], dur_obs_set_target, -1,
+            b = ObservingBlock(self.targets[self.idx_second_target_spc], dur_obs_set_target, -1,
                                constraints=constraints_set_target,
-                               configuration={"filt": str(self.target_table_spc['Filter_spc'][self.idx_second_target]),
-                                              "texp": str(self.target_table_spc['texp_spc'][self.idx_second_target])})
+                               configuration={"filt": str(self.target_table_spc['Filter_spc'][self.idx_second_target_spc]),
+                                              "texp": str(self.target_table_spc['texp_spc'][self.idx_second_target_spc])})
             blocks.append(b)
-            a = ObservingBlock(self.targets[self.idx_first_target], dur_obs_rise_target, -1,
+            a = ObservingBlock(self.targets[self.idx_first_target_spc], dur_obs_rise_target, -1,
                                constraints=constraints_rise_target,
-                               configuration={"filt": str(self.target_table_spc['Filter_spc'][self.idx_first_target]),
-                                              "texp": str(self.target_table_spc['texp_spc'][self.idx_first_target])})
+                               configuration={"filt": str(self.target_table_spc['Filter_spc'][self.idx_first_target_spc]),
+                                              "texp": str(self.target_table_spc['texp_spc'][self.idx_first_target_spc])})
             blocks.append(a)
 
         transitioner = Transitioner(slew_rate=11 * u.deg / u.second)
@@ -2509,8 +2473,8 @@ class Schedules:
 
         if telescope == 'Callisto':
             # files used to generate SR
-            efficiencyFile_SPIRIT = path_spock + '/../mphot/resources/systems/speculoos_PIRT_1280SciCam_-60.csv'
-            filterFile_SPIRIT = path_spock + '/../mphot/resources/filters/zYJ.csv'
+            efficiencyFile_SPIRIT = path_spock + '/Notebooks/mphot/resources/systems/speculoos_PIRT_1280SciCam_-60.csv'
+            filterFile_SPIRIT = path_spock + '/Notebooks/mphot/resources/filters/zYJ.csv'
             # name to refer to the generated file
             name_SPIRIT, system_response_SPIRIT = mphot.generate_system_response(
                 efficiencyFile_SPIRIT, filterFile_SPIRIT

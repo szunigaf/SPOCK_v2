@@ -1404,7 +1404,7 @@ class Schedules:
             try:
                 self.priority_ranked['texp_spc'][self.idx_first_target] = self.exposure_time(day=self.day, i=self.idx_first_target_spc)
             except IndexError:
-                self.priority_ranked['texp_spc'][self.idx_second_target] = 300
+                self.priority_ranked['texp_spc'][self.idx_second_target] = 300 #s
                 print(Fore.RED + 'ERROR: ' + Fore.BLACK + ' Problem with mphot grid generation for target ' +
                       self.first_target['target_name'] + ', check parallax on astroquery')
             if (total_hours > 200) | (self.priority_ranked['texp_spc'][self.idx_first_target] > 180):
@@ -1427,7 +1427,7 @@ class Schedules:
             try:
                 self.priority_ranked['texp_spc'][self.idx_second_target] = self.exposure_time(day=self.day,i=self.idx_second_target_spc)
             except IndexError:
-                self.priority_ranked['texp_spc'][self.idx_second_target] = 300
+                self.priority_ranked['texp_spc'][self.idx_second_target] = 300 #s
                 print(Fore.RED + 'ERROR: ' + Fore.BLACK + ' Problem with mphot grid generation for target ' +
                       self.second_target['target_name'] + ', check parallax on astroquery')
 
@@ -2681,37 +2681,37 @@ class Schedules:
 
         return texp
 
-    def exposure_time_table(self, day):
-        """ generate an exposure time table as the form of a file untitled
+    # def exposure_time_table(self, day):
+    #     """ generate an exposure time table as the form of a file untitled
 
-        Parameters
-        ----------
-        day : date
-            date in fmt 'yyyy-mm-dd'
+    #     Parameters
+    #     ----------
+    #     day : date
+    #         date in fmt 'yyyy-mm-dd'
 
-        Returns
-        -------
-        file
-            file with most appropriate exposure time for each target "exposure_time_table.csv"
+    #     Returns
+    #     -------
+    #     file
+    #         file with most appropriate exposure time for each target "exposure_time_table.csv"
 
-        """
-        if day is None:
-            print(Fore.GREEN + 'INFO: ' + Fore.BLACK + ' Not using moon phase in ETC')
-        sso_texp = np.zeros(len(self.target_table_spc))
-        sso_spirit_texp = np.zeros(len(self.target_table_spc))
-        sno_texp = np.zeros(len(self.target_table_spc))
-        saintex_texp = np.zeros(len(self.target_table_spc))
+    #     """
+    #     if day is None:
+    #         print(Fore.GREEN + 'INFO: ' + Fore.BLACK + ' Not using moon phase in ETC')
+    #     sso_texp = np.zeros(len(self.target_table_spc))
+    #     sso_spirit_texp = np.zeros(len(self.target_table_spc))
+    #     sno_texp = np.zeros(len(self.target_table_spc))
+    #     saintex_texp = np.zeros(len(self.target_table_spc))
 
-        for i in range(len(self.target_table_spc)):
-            sso_texp[i] = self.exposure_time(day, i, 'Io')
-            sso_spirit_texp[i] = self.exposure_time(day, i, 'Callisto')
-            sno_texp[i] = sso_texp[i] #self.exposure_time(day, i, 'Artemis')
-            saintex_texp[i] = sso_texp[i] #self.exposure_time(day, i, 'Saint-Ex')
+    #     for i in range(len(self.target_table_spc)):
+    #         sso_texp[i] = self.exposure_time(day, i, 'Io')
+    #         sso_spirit_texp[i] = self.exposure_time(day, i, 'Callisto')
+    #         sno_texp[i] = sso_texp[i] #self.exposure_time(day, i, 'Artemis')
+    #         saintex_texp[i] = sso_texp[i] #self.exposure_time(day, i, 'Saint-Ex')
 
-            df = pd.DataFrame({'Sp_ID': self.target_table_spc['Sp_ID'],
-                               'SSO_texp': sso_texp, 'SSO_SPIRIT_texp': sso_spirit_texp, 'SNO_texp': sno_texp,
-                               'Saintex_texp': saintex_texp,  })
-            df.to_csv(path_spock + '/SPOCK_files/exposure_time_table_mphot.csv', sep=',', index=False)
+    #         df = pd.DataFrame({'Sp_ID': self.target_table_spc['Sp_ID'],
+    #                            'SSO_texp': sso_texp, 'SSO_SPIRIT_texp': sso_spirit_texp, 'SNO_texp': sno_texp,
+    #                            'Saintex_texp': saintex_texp,  })
+    #         df.to_csv(path_spock + '/SPOCK_files/exposure_time_table_mphot.csv', sep=',', index=False)
 
     def no_obs_with_different_tel(self):
         """ function to avoid observations of a similar target,

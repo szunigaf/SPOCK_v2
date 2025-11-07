@@ -11,7 +11,7 @@ from astroplan import FixedTarget, AltitudeConstraint, MoonSeparationConstraint,
     is_observable, months_observable, time_grid_from_range, LocalTimeConstraint, is_always_observable
 from astroplan import TimeConstraint, Observer, moon_illumination
 from colorama import Fore
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, time, timedelta
 from docx import Document
 from docx.shared import *
 from docx.enum.text import WD_ALIGN_PARAGRAPH
@@ -246,14 +246,14 @@ def sso_planned_targets(date_is, telescope):
     #local
     for i in range(len(telescopes)):
         night_block_str = '/night_blocks_' + telescopes[i] + '_' + str(date_is) + '.txt'
-        path = path_spock + '/DATABASE/' + telescopes[i] + '/Archive_night_blocks/' + night_block_str
+        path = path_spock + '/DATABASE/' + telescopes[i] + '/Archive_night_blocks' + night_block_str
         try:
             c = pd.read_csv(path, delimiter=' ', index_col=False)
             for tar in c['target']:
                 targets_on_sso_telescopes.append(tar)
         except FileNotFoundError:
             print(Fore.YELLOW + 'WARNING: ' + Fore.BLACK + ' No plans in your local file for  ' +
-                  telescopes[i] + ' on the ' + str(date_is))
+                  telescopes[i] + ' on the ' + str(date_is) + ', looking online')
     #online
     for i in range(len(telescopes)):
         nightb_url = "https://speculoos.withastra.io/SPECULOOS/Observations/" + telescope + '/schedule/Archive_night_blocks/night_blocks_' + \
@@ -294,14 +294,14 @@ def sno_planned_targets(date_is):
     #local
     for i in range(len(telescopes)): 
         night_block_str = '/night_blocks_' + telescopes[i] + '_' + str(date_is) + '.txt'
-        path = path_spock + '/DATABASE/' + telescopes[i] + '/Archive_night_blocks/' + night_block_str
+        path = path_spock + '/DATABASE/' + telescopes[i] + '/Archive_night_blocks' + night_block_str
         try:
             c = pd.read_csv(path, delimiter=' ', index_col=False)
             for tar in c['target']:
                 targets_on_sno_telescopes.append(tar)
         except FileNotFoundError:
             print(Fore.YELLOW + 'WARNING: ' + Fore.BLACK + ' No plans in your local file for  ' +
-                  telescopes[i] + ' on the ' + str(date_is))
+                  telescopes[i] + ' on the ' + str(date_is) + ', looking online')
             
     #online
     for i in range(len(telescopes)):
@@ -341,14 +341,14 @@ def saintex_planned_targets(date_is):
     #local
     for i in range(len(telescopes)): 
         night_block_str = '/night_blocks_' + telescopes[i] + '_' + str(date_is) + '.txt'
-        path = path_spock + '/DATABASE/' + telescopes[i] + '/Archive_night_blocks/' + night_block_str
+        path = path_spock + '/DATABASE/' + telescopes[i] + '/Archive_night_blocks' + night_block_str
         try:
             c = pd.read_csv(path, delimiter=' ', index_col=False)
             for tar in c['target']:
                 targets_on_saintex_telescopes.append(tar)
         except FileNotFoundError:
             print(Fore.YELLOW + 'WARNING: ' + Fore.BLACK + ' No plans in your local file for  ' +
-                  telescopes[i] + ' on the ' + str(date_is))
+                  telescopes[i] + ' on the ' + str(date_is) + ', looking online')
             
     #online
     for i in range(len(telescopes)):
@@ -2246,12 +2246,60 @@ class Schedules:
         #                 self.shift_hours_observation(self.second_target)) / 24  # days
         # else:
         #     shift = self.shift_hours_observation(self.first_target) / 24  # days
+            #online
+
         target_name = target['target_name']
+        # Today’s date
+        today = Time(f"{date.today()} 15:00:00", scale='utc')
+
+        # Loop over each day
+        current_dt = today
+        merged_observed_targets_this_d = []
+        duration_obs_target_planned = 0
+
+        while current_dt <= day:
+            d = Time(current_dt)
+            # for tel in ['Io','Europa','Callisto','Ganymede']:
+            #     targets_on_sso = sso_planned_targets(date_is=d, telescope=tel)
+            # targets_on_sno = sso_planned_targets(date_is=d)
+            # targets_on_saintex = sso_planned_targets(date_is=d)
+            # merged_observed_targets_this_d = targets_on_sso + targets_on_sno + targets_on_saintex
+            # current_dt += timedelta(days=1)
+
+            for tel in ['Io','Europa','Callisto','Ganymede', 'Artemis', 'Saint-Ex']:
+
+                #local
+                night_block_str = '/night_blocks_' + tel + '_' + d.datetime.strftime("%Y-%m-%d")  + '.txt'
+                path_local = path_spock + '/DATABASE/' + tel + '/Archive_night_blocks' + night_block_str
+                try:
+                    nb_local = pd.read_csv(path_local, delimiter=' ', index_col=False)
+                    if target_name in np.array(nb_local["target"]):
+                            duration_obs_target_planned += nb_local.loc[nb_local["target"] == target_name, "duration (minutes)"]/60
+                except FileNotFoundError:
+                    print(Fore.YELLOW + 'WARNING: ' + Fore.BLACK + ' No plans in your local file for  ' +
+                        tel + ' on the ' + d.datetime.strftime("%Y-%m-%d") + " looking online")
+                    # online
+                    nightb_url = "https://speculoos.withastra.io/SPECULOOS/Observations/" + tel + \
+                            '/schedule/Archive_night_blocks/night_blocks_' + \
+                            tel + '_' + d.datetime.strftime("%Y-%m-%d") + '.txt'
+                    nightb = requests.get(nightb_url, auth=(user_portal, pwd_portal))
+                    if nightb.status_code == 404:
+                        pass
+                    else:
+                        path_online_to_local = path_spock + '/DATABASE/' + tel + '/Archive_night_blocks/night_blocks_' + tel + '_' + \
+                        d.datetime.strftime("%Y-%m-%d") + '.txt'
+                        open(path_online_to_local, 'wb').write(nightb.content)
+                        nb_online = pd.read_csv(path_online_to_local, delimiter=' ', index_col=False)
+                        if target_name in np.array(nb_online["target"]):
+                            duration_obs_target_planned += nb_online.loc[nb_online["target"] == target, "duration (minutes)"]/60
+
+            current_dt += timedelta(days=1)
+        
         matches = self.target_table_spc[self.target_table_spc['Sp_ID'] == target_name]
         if len(matches) > 0:
             nb_hours_dict = {
                 'nb_hours_observed': matches['nb_hours_surved'],#.values[0], # TO BE CHANGED TO AVA VALUES
-                'nb_hours_planned': 0  # matches['nb_hours_planned'].values[0] # TO BE CHANGED TO ONLINE SCHEDULED VALUES
+                'nb_hours_planned': duration_obs_target_planned  # matches['nb_hours_planned'].values[0] # TO BE CHANGED TO ONLINE SCHEDULED VALUES
             }
         else:
             nb_hours_dict = {

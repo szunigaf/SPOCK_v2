@@ -1285,16 +1285,16 @@ def upload_plans(day, nb_days, telescope):
         upload_np_tn(day, nb_days)
     # ------------------- update archive date by date plans folder  ------------------
 
-    path_gant_chart = os.path.join(path_spock + '/SPOCK_Figures/Preview_schedule.html')
-    path_database_home = \
-        os.path.join('speculoos@appcs.ra.phy.cam.ac.uk:/appct/data/SPECULOOSPipeline/Preview_schedule.html')
-    print(Fore.GREEN + 'INFO: ' + Fore.BLACK + ' Path local \'Gant chart\' = ', path_gant_chart)
-    print(Fore.GREEN + 'INFO: ' + Fore.BLACK + ' Path database = \'Gant chart\' = ', path_database_home)
+    # path_gant_chart = os.path.join(path_spock + '/SPOCK_Figures/Preview_schedule.html')
+    # path_database_home = \
+    #     os.path.join('speculoos@appcs.ra.phy.cam.ac.uk:/appct/data/SPECULOOSPipeline/Preview_schedule.html')
+    # print(Fore.GREEN + 'INFO: ' + Fore.BLACK + ' Path local \'Gant chart\' = ', path_gant_chart)
+    # print(Fore.GREEN + 'INFO: ' + Fore.BLACK + ' Path database = \'Gant chart\' = ', path_database_home)
     #subprocess.Popen(["sshpass", "-p", pwd_appcs, "scp", "-r", path_gant_chart, path_database_home])
-    path_gant_chart_masterfile = \
-        os.path.join('/Users/elsaducrot/spock_2/SPOCK_Figures/spock_stats_masterfile.csv')
-    path_database_home_masterfile = \
-        os.path.join('speculoos@appcs.ra.phy.cam.ac.uk:/appct/data/SPECULOOSPipeline/spock_stats_masterfile.csv')
+    # path_gant_chart_masterfile = \
+    #     os.path.join('/Users/elsaducrot/spock_2/SPOCK_Figures/spock_stats_masterfile.csv')
+    # path_database_home_masterfile = \
+    #     os.path.join('speculoos@appcs.ra.phy.cam.ac.uk:/appct/data/SPECULOOSPipeline/spock_stats_masterfile.csv')
     #subprocess.Popen(["sshpass", "-p", pwd_appcs, "scp", "-r", path_gant_chart_masterfile,
  #                     path_database_home_masterfile])
 

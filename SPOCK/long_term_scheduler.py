@@ -1347,9 +1347,10 @@ class Schedules:
             try:
                 self.priority_ranked['texp_spc'][self.idx_first_target] = self.exposure_time(day=self.day, i=self.idx_first_target_spc)
             except IndexError:
-                self.priority_ranked['texp_spc'][self.idx_second_target] = 300
+                self.priority_ranked['texp_spc'][self.idx_second_target] = 300 #s
                 print(Fore.RED + 'ERROR: ' + Fore.BLACK + ' Problem with mphot grid generation for target ' +
                       self.first_target['target_name'] + ', check parallax on astroquery')
+            print('total_hours',total_hours, 'texp', self.priority_ranked['texp_spc'][self.idx_first_target])
             if (total_hours > 200) | (self.priority_ranked['texp_spc'][self.idx_first_target] > 180):
                 self.first_target = self.priority_ranked[np.argmax(self.priority_ranked['priority'])-j]
                 print(Fore.YELLOW + 'WARNING: ' + Fore.BLACK + ' this first target will exceed 200 hours observed or has texp>180s, looking for the next one')
@@ -1370,11 +1371,12 @@ class Schedules:
             try:
                 self.priority_ranked['texp_spc'][self.idx_second_target] = self.exposure_time(day=self.day,i=self.idx_second_target_spc)
             except IndexError:
-                self.priority_ranked['texp_spc'][self.idx_second_target] = 300
+                self.priority_ranked['texp_spc'][self.idx_second_target] = 300 #s
                 print(Fore.RED + 'ERROR: ' + Fore.BLACK + ' Problem with mphot grid generation for target ' +
                       self.second_target['target_name'] + ', check parallax on astroquery')
-
-            if (nb_hours_df['nb_hours_observed'] + nb_hours_df['nb_hours_planned']>200) | (self.priority_ranked['texp_spc'][self.idx_second_target] > 180):
+            total_hours_second = nb_hours_df['nb_hours_observed'] + nb_hours_df['nb_hours_planned']
+            print('total_hours_second',total_hours_second, 'texp', self.priority_ranked['texp_spc'][self.idx_second_target])
+            if (total_hours_second>200) | (self.priority_ranked['texp_spc'][self.idx_second_target] > 180):
                 print(Fore.YELLOW + 'WARNING: ' + Fore.BLACK + ' this second target will exceed 200 hours observed or has texp>180s, looking for the next one')
                 self.second_target = self.priority_ranked[i-1]
                 self.selected_second_target = [t for t in self.targets if t.name == self.second_target['target_name']]
@@ -1420,13 +1422,13 @@ class Schedules:
                     if self.first_target['both']:
                         # self.idx_second_target = self.idx_first_target
                         self.second_target = self.first_target
-                        break
+                        continue
                         
                     if self.first_target['rise'] :
                         if self.second_target['set'].any() or self.first_target['both'].any():
                             if (rise_second_target < self.start_night) and \
                                     (set_second_target > rise_first_target):
-                                break
+                                continue
 
                         else:
                             self.second_target = None
@@ -1435,7 +1437,7 @@ class Schedules:
                         if self.second_target['rise'].any() or self.first_target['both'].any() :
                             if (set_second_target > self.end_night) and \
                                     (rise_second_target < set_first_target):
-                                break
+                                continue
 
                         else:
                             self.second_target = None
@@ -1448,7 +1450,7 @@ class Schedules:
                         if self.second_target['set'].any() or self.first_target['both'].any():
                             if (rise_second_target < self.start_night) and \
                                     (set_second_target > rise_first_target):
-                                break
+                                continue
 
                         else:
                             self.second_target = None
@@ -1457,7 +1459,7 @@ class Schedules:
                         if self.priority['rise'].any() or self.priority['both'].any() :
                             if (set_second_target > self.end_night) and \
                                     (rise_second_target < set_first_target):
-                                break
+                                continue
 
                         else:
                             self.second_target = None
@@ -1465,7 +1467,7 @@ class Schedules:
 
                     if self.first_target['both']:
                         self.second_target = self.first_target
-                        break
+                        continue
             if self.second_target is None:
                 print(Fore.YELLOW + 'WARNING: ' + Fore.BLACK + ' no second target available')
             else:
@@ -1823,8 +1825,8 @@ class Schedules:
             constraints_all = self.constraints + [TimeConstraint(self.start_night,
                                                                  self.end_night)]
             
-            self.target_table_spc['texp_spc'][self.idx_first_target_spc] = self.priority_ranked['texp_spc'][self.idx_first_target]
-            self.target_table_spc['texp_spc'][self.idx_second_target_spc] = self.priority_ranked['texp_spc'][self.idx_second_target]
+            self.target_table_spc['texp_spc'][self.idx_first_target_spc] =  self.exposure_time(day=self.day, i=self.idx_first_target_spc)
+            self.target_table_spc['texp_spc'][self.idx_second_target_spc] =  self.exposure_time(day=self.day, i=self.idx_second_target_spc)
 
         blocks = []
         # if self.target_table_spc['texp_spc'][self.idx_first_target] == 0:
@@ -2224,6 +2226,7 @@ class Schedules:
         #mphot computation
         Teff_target = int(self.target_table_spc['teff'][i]) # #K
         gaia_id = int(self.target_table_spc['Gaia_ID'][i]) #gaia
+        dist_target = float(self.target_table_spc['dist'][i]) #pc
 
         if telescope == 'Callisto':
             filt_ = 'zYJ'  # filter to use for the calculation
@@ -2255,9 +2258,14 @@ class Schedules:
             }
 
             # get the precision and components used to calculate it (generates grid if not already present)
-            result = mphot.get_precision_gaia(
-                props_callisto, props_sky, source_id=gaia_id, Teff=Teff_target
-            )
+            try:
+                #result = mphot.get_precision_gaia(props_callisto, props_sky, source_id=gaia_id, Teff=Teff_target)
+                result = mphot.get_precision(props_callisto, props_sky, Teff=Teff_target, distance=dist_target)
+            except FileNotFoundError:
+                print(Fore.GREEN + 'INFO: ' + Fore.BLACK + ' Re-running the grid for mphot, can take 30s')
+                #result = mphot.get_precision_gaia(props_callisto, props_sky, source_id=gaia_id, Teff=Teff_target, override_grid=True)
+                result = mphot.get_precision(props_callisto, props_sky, Teff=Teff_target, distance=dist_target, override_grid=True)
+                raise
             # extract exposure time
             image_precision, binned_precision, components = result
             exposure_time = components["t [s]"]
@@ -2301,10 +2309,12 @@ class Schedules:
 
             # get the precision and components used to calculate it (generates grid if not already present)
             try:
-                result = mphot.get_precision_gaia(props_telescope_ANDOR, props_sky, source_id=gaia_id, Teff=Teff_target)
+                #result = mphot.get_precision_gaia(props_telescope_ANDOR, props_sky, source_id=gaia_id, Teff=Teff_target)
+                result = mphot.get_precision(props_telescope_ANDOR, props_sky, Teff=Teff_target, distance=dist_target)
             except FileNotFoundError:
                 print(Fore.GREEN + 'INFO: ' + Fore.BLACK + ' Re-running the grid for mphot, can take 30s')
-                result = mphot.get_precision_gaia(props_telescope_ANDOR, props_sky, source_id=gaia_id, Teff=Teff_target, override_grid=True)
+                #result = mphot.get_precision_gaia(props_telescope_ANDOR, props_sky, source_id=gaia_id, Teff=Teff_target, override_grid=True)
+                result = mphot.get_precision(props_telescope_ANDOR, props_sky, Teff=Teff_target, distance=dist_target, override_grid=True)
                 raise
             # extract exposure time
             image_precision, binned_precision, components = result
@@ -2352,37 +2362,37 @@ class Schedules:
 
         return texp
 
-    def exposure_time_table(self, day):
-        """ generate an exposure time table as the form of a file untitled
+    # def exposure_time_table(self, day):
+    #     """ generate an exposure time table as the form of a file untitled
 
-        Parameters
-        ----------
-        day : date
-            date in fmt 'yyyy-mm-dd'
+    #     Parameters
+    #     ----------
+    #     day : date
+    #         date in fmt 'yyyy-mm-dd'
 
-        Returns
-        -------
-        file
-            file with most appropriate exposure time for each target "exposure_time_table.csv"
+    #     Returns
+    #     -------
+    #     file
+    #         file with most appropriate exposure time for each target "exposure_time_table.csv"
 
-        """
-        if day is None:
-            print(Fore.GREEN + 'INFO: ' + Fore.BLACK + ' Not using moon phase in ETC')
-        sso_texp = np.zeros(len(self.target_table_spc))
-        sso_spirit_texp = np.zeros(len(self.target_table_spc))
-        sno_texp = np.zeros(len(self.target_table_spc))
-        saintex_texp = np.zeros(len(self.target_table_spc))
+    #     """
+    #     if day is None:
+    #         print(Fore.GREEN + 'INFO: ' + Fore.BLACK + ' Not using moon phase in ETC')
+    #     sso_texp = np.zeros(len(self.target_table_spc))
+    #     sso_spirit_texp = np.zeros(len(self.target_table_spc))
+    #     sno_texp = np.zeros(len(self.target_table_spc))
+    #     saintex_texp = np.zeros(len(self.target_table_spc))
 
-        for i in range(len(self.target_table_spc)):
-            sso_texp[i] = self.exposure_time(day, i, 'Io')
-            sso_spirit_texp[i] = self.exposure_time(day, i, 'Callisto')
-            sno_texp[i] = sso_texp[i] #self.exposure_time(day, i, 'Artemis')
-            saintex_texp[i] = sso_texp[i] #self.exposure_time(day, i, 'Saint-Ex')
+    #     for i in range(len(self.target_table_spc)):
+    #         sso_texp[i] = self.exposure_time(day, i, 'Io')
+    #         sso_spirit_texp[i] = self.exposure_time(day, i, 'Callisto')
+    #         sno_texp[i] = sso_texp[i] #self.exposure_time(day, i, 'Artemis')
+    #         saintex_texp[i] = sso_texp[i] #self.exposure_time(day, i, 'Saint-Ex')
 
-            df = pd.DataFrame({'Sp_ID': self.target_table_spc['Sp_ID'],
-                               'SSO_texp': sso_texp, 'SSO_SPIRIT_texp': sso_spirit_texp, 'SNO_texp': sno_texp,
-                               'Saintex_texp': saintex_texp,  })
-            df.to_csv(path_spock + '/SPOCK_files/exposure_time_table_mphot.csv', sep=',', index=False)
+    #         df = pd.DataFrame({'Sp_ID': self.target_table_spc['Sp_ID'],
+    #                            'SSO_texp': sso_texp, 'SSO_SPIRIT_texp': sso_spirit_texp, 'SNO_texp': sno_texp,
+    #                            'Saintex_texp': saintex_texp,  })
+    #         df.to_csv(path_spock + '/SPOCK_files/exposure_time_table_mphot.csv', sep=',', index=False)
 
     def no_obs_with_different_tel(self):
         """ function to avoid observations of a similar target,

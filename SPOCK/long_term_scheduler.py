@@ -1309,11 +1309,7 @@ class Schedules:
                 # self.start_night = self.observatory.sun_set_time(self.day, which='next', horizon=horizon_for_set_and_rise)
                 # self.end_night = self.observatory.sun_rise_time(self.day, which='next', horizon=horizon_for_set_and_rise)
                 self.table_priority_prio(self.day)
-<<<<<<< HEAD
-                self.idx_nightly_targets(t)
-=======
                 self.idx_nightly_targets(t=1)
->>>>>>> upstream/main
                 #self.update_hours(self.day,targets)
                 # if self.is_constraints_met_first_target(t):
                 #     self.first_target = self.priority[self.idx_first_target]

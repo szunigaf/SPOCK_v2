@@ -1065,8 +1065,8 @@ class Schedules:
             # possible filters = ['zYJ','J','H']
 
             #mphot computation
-            efficiencyFile_SPIRIT = path_spock + '/../mphot/resources/systems/speculoos_PIRT_1280SciCam_-60.csv'
-            filterFile_SPIRIT = path_spock + '/../mphot/resources/filters/'+filt_+'.csv'
+            efficiencyFile_SPIRIT = path_spock + '/Notebooks/mphot/resources/systems/speculoos_PIRT_1280SciCam_-60.csv'
+            filterFile_SPIRIT = path_spock + '/Notebooks/mphot/resources/filters/'+filt_+'.csv'
             # name to refer to the generated file
             name_SPIRIT, system_response_SPIRIT = mphot.generate_system_response(
                 efficiencyFile_SPIRIT, filterFile_SPIRIT
@@ -1113,8 +1113,8 @@ class Schedules:
             filt_ = filters[filt_idx]
 
             #mphot computation
-            efficiencyFile_ANDOR = path_spock + '/../mphot/resources/systems/speculoos_Andor_iKon-L-936_-60.csv'
-            filterFile_ANDOR = path_spock + '/../mphot/resources/filters/'+str(filt_)+'.csv'
+            efficiencyFile_ANDOR = path_spock + '/Notebooks/mphot/resources/systems/speculoos_Andor_iKon-L-936_-60.csv'
+            filterFile_ANDOR = path_spock + '/Notebooks/mphot/resources/filters/'+str(filt_)+'.csv'
             # name to refer to the generated file
             name_ANDOR, system_response_ANDOR = mphot.generate_system_response(
                 efficiencyFile_ANDOR, filterFile_ANDOR
@@ -1160,8 +1160,8 @@ class Schedules:
 
                 filt_idx += 1
                 filt_ = filters[filt_idx]
-                efficiencyFile_ANDOR = path_spock + '/../mphot/resources/systems/speculoos_Andor_iKon-L-936_-60.csv'
-                filterFile_ANDOR = path_spock + '/../mphot/resources/filters/'+str(filt_)+'.csv'
+                efficiencyFile_ANDOR = path_spock + '/Notebooks/mphot/resources/systems/speculoos_Andor_iKon-L-936_-60.csv'
+                filterFile_ANDOR = path_spock + '/Notebooks/mphot/resources/filters/'+str(filt_)+'.csv'
                 # name to refer to the generated file
                 name_ANDOR, system_response_ANDOR = mphot.generate_system_response(
                     efficiencyFile_ANDOR, filterFile_ANDOR
@@ -1290,13 +1290,13 @@ def upload_plans(day, nb_days, telescope):
         os.path.join('speculoos@appcs.ra.phy.cam.ac.uk:/appct/data/SPECULOOSPipeline/Preview_schedule.html')
     print(Fore.GREEN + 'INFO: ' + Fore.BLACK + ' Path local \'Gant chart\' = ', path_gant_chart)
     print(Fore.GREEN + 'INFO: ' + Fore.BLACK + ' Path database = \'Gant chart\' = ', path_database_home)
-    subprocess.Popen(["sshpass", "-p", pwd_appcs, "scp", "-r", path_gant_chart, path_database_home])
+    #subprocess.Popen(["sshpass", "-p", pwd_appcs, "scp", "-r", path_gant_chart, path_database_home])
     path_gant_chart_masterfile = \
         os.path.join('/Users/elsaducrot/spock_2/SPOCK_Figures/spock_stats_masterfile.csv')
     path_database_home_masterfile = \
         os.path.join('speculoos@appcs.ra.phy.cam.ac.uk:/appct/data/SPECULOOSPipeline/spock_stats_masterfile.csv')
-    subprocess.Popen(["sshpass", "-p", pwd_appcs, "scp", "-r", path_gant_chart_masterfile,
-                      path_database_home_masterfile])
+    #subprocess.Popen(["sshpass", "-p", pwd_appcs, "scp", "-r", path_gant_chart_masterfile,
+ #                     path_database_home_masterfile])
 
 
 def read_night_block(telescope, day):

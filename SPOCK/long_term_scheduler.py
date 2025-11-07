@@ -323,6 +323,7 @@ def sno_planned_targets(date_is):
 
 def saintex_planned_targets(date_is):
     """ tell which target are scheduled on SNO on a given day
+
     Parameters
     ----------
     date_is : date
@@ -2342,7 +2343,6 @@ class Schedules:
         #                 self.shift_hours_observation(self.second_target)) / 24  # days
         # else:
         #     shift = self.shift_hours_observation(self.first_target) / 24  # days
-            #online
 
         target_name = target['target_name']
         # Today’s date

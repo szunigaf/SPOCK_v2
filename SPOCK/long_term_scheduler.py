@@ -323,6 +323,7 @@ def sno_planned_targets(date_is):
 
 def saintex_planned_targets(date_is):
     """ tell which target are scheduled on SNO on a given day
+
     Parameters
     ----------
     date_is : date
@@ -1308,8 +1309,13 @@ class Schedules:
                 # self.start_night = self.observatory.sun_set_time(self.day, which='next', horizon=horizon_for_set_and_rise)
                 # self.end_night = self.observatory.sun_rise_time(self.day, which='next', horizon=horizon_for_set_and_rise)
                 self.table_priority_prio(self.day)
+<<<<<<< HEAD
+                targets = self.idx_nightly_targets(t=1)
+                self.update_hours(self.day,targets)
+=======
                  self.idx_nightly_targets(t=1)
                 #self.update_hours(self.day,targets)
+>>>>>>> origin/main
                 # if self.is_constraints_met_first_target(t):
                 #     self.first_target = self.priority[self.idx_first_target]
                 #     self.first_target_by_day.append(self.first_target)
@@ -1395,11 +1401,19 @@ class Schedules:
         
         #print(nb_hours_df)
         self.selected_first_target = [t for t in self.targets if t.name == self.first_target['target_name']]
+<<<<<<< HEAD
+        self.idx_first_target =  np.where(self.target_table_spc['Sp_ID'] == self.first_target['target_name'])[0]
+=======
         self.idx_first_target =  np.where(self.priority_ranked['target_name'] == self.first_target['target_name'])[0]
+>>>>>>> origin/main
 
         #dt_1day = Time('2018-01-02 00:00:00', scale='tcg') - Time('2018-01-01 00:00:00', scale='tcg')  # 1 day
 
+<<<<<<< HEAD
+        for i in range(self.idx_first_target+1, len(self.targets)):
+=======
         for i in range(self.idx_first_target[0] - 1, 0, -1):
+>>>>>>> origin/main
             # print(self.targets[self.idx_first_target].name)
             self.second_target = self.priority_ranked[i]  #self.priority[self.idx_first_target]
             self.idx_second_target =  np.where(self.priority_ranked['target_name'] == self.second_target['target_name'])[0]
@@ -1440,6 +1454,25 @@ class Schedules:
                                                             which='nearest',
                                                             horizon=self.Altitude_constraint * u.deg): # typically happens for Saint-Ex as the night start in the middle of a UTC time night
                     
+<<<<<<< HEAD
+                if self.first_target['rise'] :
+                    if self.second_target['set'].any() or self.first_target['both'].any():
+                        if (rise_second_target < self.start_night) and \
+                                (set_second_target > rise_first_target):
+                            break
+
+                        else:
+                            self.second_target = None
+
+                if self.first_target['set']:
+                    if self.second_target['rise'].any() or self.first_target['both'].any() :
+                        if (set_second_target > self.end_night) and \
+                                (rise_second_target < set_first_target):
+                            break
+
+                        else:
+                            self.second_target = None
+=======
                     rise_first_target = self.observatory.target_rise_time(self.date_range[0] + t + 1,
                                                                             self.selected_first_target,
                                                                             which='next',
@@ -1468,11 +1501,29 @@ class Schedules:
 
                             else:
                                 self.second_target = None
+>>>>>>> origin/main
 
 
                 if (self.telescope == 'Io') or (self.telescope == 'Europa') or (self.telescope == 'Ganymede') or \
                     (self.telescope == 'Callisto') or (self.telescope == 'Artemis'):
 
+<<<<<<< HEAD
+                if self.first_target['rise'] :
+                    if self.second_target['set'].any() or self.first_target['both'].any():
+                        if (rise_second_target < self.start_night) and \
+                                (set_second_target > rise_first_target):
+                            break
+
+                        else:
+                            self.second_target = None
+
+                if self.first_target['set']:
+                    if self.priority['rise'].any() or self.priority['both'].any() :
+                        if (set_second_target > self.end_night) and \
+                                (rise_second_target < set_first_target):
+                            print(i,"set, break")
+                            break
+=======
                     if self.first_target['rise'] :
                         if self.second_target['set'].any() or self.first_target['both'].any():
                             if (rise_second_target < self.start_night) and \
@@ -1517,12 +1568,23 @@ class Schedules:
                                                                 self.selected_second_target,
                                                                 which='next',
                                                                 horizon=self.Altitude_constraint * u.deg)
+>>>>>>> origin/main
 
                 if set_first_target < self.observatory.target_rise_time(self.date_range[0] + t,
                                                             self.selected_first_target,
                                                             which='nearest',
                                                             horizon=self.Altitude_constraint * u.deg):  # typically happens for Saint-Ex as the night start in the middle of a UTC time night
 
+<<<<<<< HEAD
+                if self.first_target['both']:
+                    self.second_target = self.first_target
+                    break
+
+        if self.second_target is None:
+            print(Fore.GREEN + 'INFO: ' + Fore.BLACK + ' no second target available')
+            
+        return [self.first_target,self.second_target]
+=======
                     set_first_target = self.observatory.target_set_time(self.date_range[0] + t + 1,
                                                                         self.selected_first_target,
                                                                         which='next',
@@ -1595,6 +1657,7 @@ class Schedules:
 
             
     #   return [self.first_target,self.second_target]
+>>>>>>> origin/main
 
     def table_priority_prio(self, day):
 
@@ -2342,7 +2405,6 @@ class Schedules:
         #                 self.shift_hours_observation(self.second_target)) / 24  # days
         # else:
         #     shift = self.shift_hours_observation(self.first_target) / 24  # days
-            #online
 
         target_name = target['target_name']
         # Today’s date

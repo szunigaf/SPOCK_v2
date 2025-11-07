@@ -3,7 +3,7 @@ from astropy.table import Table
 from astropy import units as u
 from astropy.coordinates import SkyCoord, get_sun, AltAz, EarthLocation
 from astropy.utils import iers
-from astropy.time import Time
+from astropy.time import Time,  TimeDelta
 from astropy.utils.data import clear_download_cache
 
 clear_download_cache()
@@ -251,9 +251,11 @@ def sso_planned_targets(date_is, telescope):
             c = pd.read_csv(path, delimiter=' ', index_col=False)
             for tar in c['target']:
                 targets_on_sso_telescopes.append(tar)
+            print(Fore.GREEN + 'INFO: ' + Fore.BLACK + ' Using plans in your local file for ' +
+                  telescopes[i] + ' on the ' + str(date_is) + ' to check which targets are observed')
         except FileNotFoundError:
-            print(Fore.YELLOW + 'WARNING: ' + Fore.BLACK + ' No plans in your local file for  ' +
-                  telescopes[i] + ' on the ' + str(date_is) + ', looking online')
+            print(Fore.GREEN + 'INFO: ' + Fore.BLACK + ' No plans in your local file for ' +
+                  telescopes[i] + ' on the ' + str(date_is) + ', looking online to check which targets are observed')
     #online
     for i in range(len(telescopes)):
         nightb_url = "https://speculoos.withastra.io/SPECULOOS/Observations/" + telescope + '/schedule/Archive_night_blocks/night_blocks_' + \
@@ -261,7 +263,8 @@ def sso_planned_targets(date_is, telescope):
         nightb = requests.get(nightb_url, auth=(user_portal, pwd_portal))
 
         if nightb.status_code == 404:
-            sys.exit(Fore.RED + 'ERROR:  ' + Fore.BLACK + ' No plans on the server for this date')
+            pass
+            #print(Fore.GREEN + 'INFO:  ' + Fore.BLACK + ' No plans on the server for this date')
         else:
             path_local = path_spock + '/DATABASE/' + telescope + '/Archive_night_blocks/night_blocks_' + telescope + '_' + \
                  str(date_is) + '.txt'
@@ -299,9 +302,11 @@ def sno_planned_targets(date_is):
             c = pd.read_csv(path, delimiter=' ', index_col=False)
             for tar in c['target']:
                 targets_on_sno_telescopes.append(tar)
+            print(Fore.GREEN + 'INFO: ' + Fore.BLACK + ' Using plans in your local file for ' +
+                  telescopes[i] + ' on the ' + str(date_is) + ' to check which targets are observed')
         except FileNotFoundError:
-            print(Fore.YELLOW + 'WARNING: ' + Fore.BLACK + ' No plans in your local file for  ' +
-                  telescopes[i] + ' on the ' + str(date_is) + ', looking online')
+            print(Fore.GREEN + 'INFO: ' + Fore.BLACK + ' No plans in your local file for ' +
+                  telescopes[i] + ' on the ' + str(date_is) + ', looking online to check which targets are observed')
             
     #online
     for i in range(len(telescopes)):
@@ -309,7 +314,8 @@ def sno_planned_targets(date_is):
         nightb = requests.get(nightb_url, auth=(user_portal, pwd_portal))
 
         if nightb.status_code == 404:
-            sys.exit(Fore.RED + 'ERROR:  ' + Fore.BLACK + ' No plans on the server for this date')
+            pass
+            #print(Fore.GREEN + 'INFO:  ' + Fore.BLACK + ' No plans on the server for this date')
         else:
             path_local = path_spock + '/DATABASE/' + telescopes[i] + '/Archive_night_blocks/night_blocks_' + telescopes[i] + '_' + \
                  str(date_is) + '.txt'
@@ -346,9 +352,11 @@ def saintex_planned_targets(date_is):
             c = pd.read_csv(path, delimiter=' ', index_col=False)
             for tar in c['target']:
                 targets_on_saintex_telescopes.append(tar)
+            print(Fore.GREEN + 'INFO: ' + Fore.BLACK + ' Using plans in your local file for ' +
+                  telescopes[i] + ' on the ' + str(date_is) + ' to check which targets are observed')
         except FileNotFoundError:
-            print(Fore.YELLOW + 'WARNING: ' + Fore.BLACK + ' No plans in your local file for  ' +
-                  telescopes[i] + ' on the ' + str(date_is) + ', looking online')
+            print(Fore.GREEN + 'INFO: ' + Fore.BLACK + ' No plans in your local file for ' +
+                  telescopes[i] + ' on the ' + str(date_is) + ', looking online to check which targets are observed')
             
     #online
     for i in range(len(telescopes)):
@@ -356,7 +364,8 @@ def saintex_planned_targets(date_is):
         nightb = requests.get(nightb_url, auth=(user_portal, pwd_portal))
 
         if nightb.status_code == 404:
-            sys.exit(Fore.RED + 'ERROR:  ' + Fore.BLACK + ' No plans on the server for this date')
+            pass
+            #print(Fore.GREEN + 'INFO:  ' + Fore.BLACK + ' No plans on the server for this date')
         else:
             path_local = path_spock + '/DATABASE/' + telescopes[i] + '/Archive_night_blocks/night_blocks_' + telescopes[i] + '_' + \
                  str(date_is) + '.txt'
@@ -1220,7 +1229,7 @@ class Schedules:
         observed_targets_SNO = []
         observed_targets_SaintEx = []
 
-        for i in tqdm(range(self.date_range_in_days), desc="Updating hours of obs "):
+        for i in tqdm(range(self.date_range_in_days), desc="Retrieving planned targets"):
             pass
             date = self.date_range[0] + i
             day_fmt = Time(date.iso, out_subfmt='date').iso
@@ -1328,12 +1337,22 @@ class Schedules:
         #self.idx_first_target = self.index_prio[idx_init_first]
 
         self.first_target = self.priority_ranked[np.argmax(self.priority_ranked['priority'])]  #self.priority[self.idx_first_target]
+        
 
-        for j in np.arange(len(self.priority_ranked)):
+        for j in np.arange(1,len(self.priority_ranked),1):
             nb_hours_df = self.update_hours(self.day, self.first_target)
-            if nb_hours_df['nb_hours_observed'] + nb_hours_df['nb_hours_planned']>200:
+            total_hours = nb_hours_df['nb_hours_observed'] + nb_hours_df['nb_hours_planned']
+            self.idx_first_target =  np.where(self.priority_ranked['target_name'] == self.first_target['target_name'])[0]
+            self.idx_first_target_spc =  np.where(self.target_table_spc['Sp_ID'] == self.first_target['target_name'])[0][0]
+            try:
+                self.priority_ranked['texp_spc'][self.idx_first_target] = self.exposure_time(day=self.day, i=self.idx_first_target_spc)
+            except IndexError:
+                self.priority_ranked['texp_spc'][self.idx_second_target] = 300
+                print(Fore.RED + 'ERROR: ' + Fore.BLACK + ' Problem with mphot grid generation for target ' +
+                      self.first_target['target_name'] + ', check parallax on astroquery')
+            if (total_hours > 200) | (self.priority_ranked['texp_spc'][self.idx_first_target] > 180):
                 self.first_target = self.priority_ranked[np.argmax(self.priority_ranked['priority'])-j]
-                continue
+                print(Fore.YELLOW + 'WARNING: ' + Fore.BLACK + ' this first target will exceed 200 hours observed or has texp>180s, looking for the next one')
             else:
                 break
         
@@ -1344,12 +1363,20 @@ class Schedules:
         #dt_1day = Time('2018-01-02 00:00:00', scale='tcg') - Time('2018-01-01 00:00:00', scale='tcg')  # 1 day
 
         for i in range(self.idx_first_target[0] - 1, 0, -1):
-            # print(self.targets[self.idx_first_target].name)
-            self.second_target = self.priority_ranked[i]  #self.priority[self.idx_first_target]
+            self.second_target = self.priority_ranked[i]  
             self.idx_second_target =  np.where(self.priority_ranked['target_name'] == self.second_target['target_name'])[0]
             nb_hours_df = self.update_hours(self.day, self.second_target)
-            if nb_hours_df['nb_hours_observed'] + nb_hours_df['nb_hours_planned']>200:
-                self.second_target = self.priority_ranked[np.argmax(self.priority_ranked['priority'])-i]
+            self.idx_second_target_spc =  np.where(self.target_table_spc['Sp_ID'] == self.second_target['target_name'])[0][0]
+            try:
+                self.priority_ranked['texp_spc'][self.idx_second_target] = self.exposure_time(day=self.day,i=self.idx_second_target_spc)
+            except IndexError:
+                self.priority_ranked['texp_spc'][self.idx_second_target] = 300
+                print(Fore.RED + 'ERROR: ' + Fore.BLACK + ' Problem with mphot grid generation for target ' +
+                      self.second_target['target_name'] + ', check parallax on astroquery')
+
+            if (nb_hours_df['nb_hours_observed'] + nb_hours_df['nb_hours_planned']>200) | (self.priority_ranked['texp_spc'][self.idx_second_target] > 180):
+                print(Fore.YELLOW + 'WARNING: ' + Fore.BLACK + ' this second target will exceed 200 hours observed or has texp>180s, looking for the next one')
+                self.second_target = self.priority_ranked[i-1]
                 self.selected_second_target = [t for t in self.targets if t.name == self.second_target['target_name']]
                 rise_first_target = self.observatory.target_rise_time(self.date_range[0] + t,
                                                                         self.selected_first_target,
@@ -1388,9 +1415,7 @@ class Schedules:
                                                                             self.selected_first_target,
                                                                             which='next',
                                                                             horizon=self.Altitude_constraint * u.deg) 
-                    
-
-
+                
                 if self.telescope == "Saint-Ex":
                     if self.first_target['both']:
                         # self.idx_second_target = self.idx_first_target
@@ -1403,8 +1428,8 @@ class Schedules:
                                     (set_second_target > rise_first_target):
                                 break
 
-                            else:
-                                self.second_target = None
+                        else:
+                            self.second_target = None
 
                     if self.first_target['set']:
                         if self.second_target['rise'].any() or self.first_target['both'].any() :
@@ -1412,8 +1437,8 @@ class Schedules:
                                     (rise_second_target < set_first_target):
                                 break
 
-                            else:
-                                self.second_target = None
+                        else:
+                            self.second_target = None
 
 
                 if (self.telescope == 'Io') or (self.telescope == 'Europa') or (self.telescope == 'Ganymede') or \
@@ -1425,8 +1450,8 @@ class Schedules:
                                     (set_second_target > rise_first_target):
                                 break
 
-                            else:
-                                self.second_target = None
+                        else:
+                            self.second_target = None
 
                     if self.first_target['set']:
                         if self.priority['rise'].any() or self.priority['both'].any() :
@@ -1434,17 +1459,17 @@ class Schedules:
                                     (rise_second_target < set_first_target):
                                 break
 
-                            else:
-                                self.second_target = None
-                                #self.idx_second_target = None
+                        else:
+                            self.second_target = None
+                            #self.idx_second_target = None
 
                     if self.first_target['both']:
                         self.second_target = self.first_target
                         break
-                if self.second_target is None:
-                    print(Fore.GREEN + 'INFO: ' + Fore.BLACK + ' no second target available')
+            if self.second_target is None:
+                print(Fore.YELLOW + 'WARNING: ' + Fore.BLACK + ' no second target available')
             else:
-                self.selected_second_target = [t for t in self.targets if t.name == self.second_target['target_name']]
+                self.selected_second_target = [tar for tar in self.targets if tar.name == self.second_target['target_name']]
                 rise_first_target = self.observatory.target_rise_time(self.date_range[0] + t,
                                                                     self.selected_first_target,
                                                                     which='next',
@@ -1495,8 +1520,8 @@ class Schedules:
                                     (set_second_target > rise_first_target):
                                 break
 
-                            else:
-                                self.second_target = None
+                        else:
+                            self.second_target = None
 
                     if self.first_target['set']:
                         if self.second_target['rise'].any() or self.first_target['both'].any() :
@@ -1504,8 +1529,8 @@ class Schedules:
                                     (rise_second_target < set_first_target):
                                 break
 
-                            else:
-                                self.second_target = None
+                        else:
+                            self.second_target = None
 
 
                 if (self.telescope == 'Io') or (self.telescope == 'Europa') or (self.telescope == 'Ganymede') or \
@@ -1517,8 +1542,8 @@ class Schedules:
                                     (set_second_target > rise_first_target):
                                 break
 
-                            else:
-                                self.second_target = None
+                        else:
+                            self.second_target = None
 
                     if self.first_target['set']:
                         if self.priority['rise'].any() or self.priority['both'].any() :
@@ -1526,16 +1551,16 @@ class Schedules:
                                     (rise_second_target < set_first_target):
                                 break
 
-                            else:
-                                self.second_target = None
-                                #self.idx_second_target = None
+                        else:
+                            self.second_target = None
+                            #self.idx_second_target = None
 
                     if self.first_target['both']:
                         self.second_target = self.first_target
                         break
                     
                 if self.second_target is None:
-                    print(Fore.GREEN + 'INFO: ' + Fore.BLACK + ' no second target available')
+                    print(Fore.YELLOW + 'WARNING: ' + Fore.BLACK + ' finding another second target that respects the constraints')
 
             
     #   return [self.first_target,self.second_target]
@@ -1705,7 +1730,7 @@ class Schedules:
                                         'to_do' : np.zeros(len(self.targets), dtype=bool),
                                         'started' : np.zeros(len(self.targets), dtype=bool),
                                         'completed' : np.zeros(len(self.targets), dtype=bool),
-                                        'texp_spc' : np.zeros(len(self.targets))
+                                        'texp_spc' : np.zeros(len(self.targets)),
                            })
             self.priority = Table.from_pandas(df_priority)
 
@@ -1783,10 +1808,8 @@ class Schedules:
                                                                          self.end_night)]
             constraints_all = self.constraints + [TimeConstraint(self.start_night, self.end_night)]
             
-            self.target_table_spc['texp_spc'][self.idx_first_target_spc] = self.exposure_time(day=day,
-                                                                                          i=self.idx_first_target_spc)
-            self.target_table_spc['texp_spc'][self.idx_second_target_spc] = self.exposure_time(day=day,
-                                                                                           i=self.idx_second_target_spc)
+            self.target_table_spc['texp_spc'][self.idx_first_target_spc] = self.priority_ranked['texp_spc'][self.idx_first_target]
+            self.target_table_spc['texp_spc'][self.idx_second_target_spc] = self.priority_ranked['texp_spc'][self.idx_second_target]
 
         else:
             constraints_set_target = self.constraints + [TimeConstraint(self.start_night,
@@ -1800,10 +1823,8 @@ class Schedules:
             constraints_all = self.constraints + [TimeConstraint(self.start_night,
                                                                  self.end_night)]
             
-            self.target_table_spc['texp_spc'][self.idx_first_target_spc] = self.exposure_time(day=None,
-                                                                                          i=self.idx_first_target_spc)
-            self.target_table_spc['texp_spc'][self.idx_second_target_spc] = self.exposure_time(day=None,
-                                                                                           i=self.idx_second_target_spc)
+            self.target_table_spc['texp_spc'][self.idx_first_target_spc] = self.priority_ranked['texp_spc'][self.idx_first_target]
+            self.target_table_spc['texp_spc'][self.idx_second_target_spc] = self.priority_ranked['texp_spc'][self.idx_second_target]
 
         blocks = []
         # if self.target_table_spc['texp_spc'][self.idx_first_target] == 0:
@@ -1983,42 +2004,48 @@ class Schedules:
         #     shift = self.shift_hours_observation(self.first_target) / 24  # days
 
         target_name = target['target_name']
+        print(Fore.GREEN + 'INFO: ' + Fore.BLACK + ' Checking that ' + target_name + ' does not exceed max hours')
         # Today’s date
         today = Time(f"{date.today()} 15:00:00", scale='utc')
-
+        day.format = 'iso'
         # Loop over each day
         current_dt = today
         merged_observed_targets_this_d = []
         duration_obs_target_planned = 0
 
-        while current_dt <= day:
+        while current_dt < day:
             d = Time(current_dt)
-            # for tel in ['Io','Europa','Callisto','Ganymede']:
-            #     targets_on_sso = sso_planned_targets(date_is=d, telescope=tel)
-            # targets_on_sno = sso_planned_targets(date_is=d)
-            # targets_on_saintex = sso_planned_targets(date_is=d)
-            # merged_observed_targets_this_d = targets_on_sso + targets_on_sno + targets_on_saintex
-            # current_dt += timedelta(days=1)
-
             for tel in ['Io','Europa','Callisto','Ganymede', 'Artemis', 'Saint-Ex']:
 
                 #local
                 night_block_str = '/night_blocks_' + tel + '_' + d.datetime.strftime("%Y-%m-%d")  + '.txt'
                 path_local = path_spock + '/DATABASE/' + tel + '/Archive_night_blocks' + night_block_str
-                try:
+                path_local_nbp = path_spock + '/night_blocks_propositions' + night_block_str
+                if os.path.exists(path_local):
                     nb_local = pd.read_csv(path_local, delimiter=' ', index_col=False)
                     if target_name in np.array(nb_local["target"]):
                             duration_obs_target_planned += nb_local.loc[nb_local["target"] == target_name, "duration (minutes)"]/60
-                except FileNotFoundError:
-                    print(Fore.YELLOW + 'WARNING: ' + Fore.BLACK + ' No plans in your local file for  ' +
-                        tel + ' on the ' + d.datetime.strftime("%Y-%m-%d") + " looking online")
+                    # print(Fore.GREEN + 'INFO: ' + Fore.BLACK + 'Using local plans for ' +
+                    #     tel + ' on the ' + d.datetime.strftime("%Y-%m-%d") + " to update hours")
+                    
+                #looking in your local night_blocks_proposition to account for previous days if you schedule on a range 
+                if os.path.exists(path_local_nbp):
+                    nb_local_nbp = pd.read_csv(path_local_nbp, delimiter=' ', index_col=False)
+                    if target_name in np.array(nb_local_nbp["target"]):
+                            duration_obs_target_planned += nb_local_nbp.loc[nb_local_nbp["target"] == target_name, "duration (minutes)"]/60
+                    # print(Fore.GREEN + 'INFO: ' + Fore.BLACK + 'Using local night_blocks_propositions folder for ' +
+                    #     tel + ' on the ' + d.datetime.strftime("%Y-%m-%d") + " to update hours")
+
+                if not os.path.exists(path_local) and not os.path.exists(path_local_nbp):
+                    # print(Fore.GREEN + 'INFO: ' + Fore.BLACK + ' No plans in your local folders for ' +
+                    #     tel + ' on the ' + d.datetime.strftime("%Y-%m-%d") + " looking online to update hours")
                     # online
                     nightb_url = "https://speculoos.withastra.io/SPECULOOS/Observations/" + tel + \
                             '/schedule/Archive_night_blocks/night_blocks_' + \
                             tel + '_' + d.datetime.strftime("%Y-%m-%d") + '.txt'
                     nightb = requests.get(nightb_url, auth=(user_portal, pwd_portal))
                     if nightb.status_code == 404:
-                        pass
+                        continue
                     else:
                         path_online_to_local = path_spock + '/DATABASE/' + tel + '/Archive_night_blocks/night_blocks_' + tel + '_' + \
                         d.datetime.strftime("%Y-%m-%d") + '.txt'
@@ -2027,8 +2054,13 @@ class Schedules:
                         if target_name in np.array(nb_online["target"]):
                             duration_obs_target_planned += nb_online.loc[nb_online["target"] == target, "duration (minutes)"]/60
 
-            current_dt += timedelta(days=1)
-        
+
+
+            current_dt += TimeDelta(1, format='jd')
+            
+        if isinstance(duration_obs_target_planned, pd.Series):
+            duration_obs_target_planned = duration_obs_target_planned.values[0]
+            
         matches = self.target_table_spc[self.target_table_spc['Sp_ID'] == target_name]
         if len(matches) > 0:
             nb_hours_dict = {
@@ -2194,9 +2226,10 @@ class Schedules:
         gaia_id = int(self.target_table_spc['Gaia_ID'][i]) #gaia
 
         if telescope == 'Callisto':
+            filt_ = 'zYJ'  # filter to use for the calculation
             # files used to generate SR
-            efficiencyFile_SPIRIT = path_spock + '/Notebooks/mphot/resources/systems/speculoos_PIRT_1280SciCam_-60.csv'
-            filterFile_SPIRIT = path_spock + '/Notebooks/mphot/resources/filters/zYJ.csv'
+            efficiencyFile_SPIRIT = path_spock + '/../mphot/resources/systems/speculoos_PIRT_1280SciCam_-60.csv'
+            filterFile_SPIRIT = path_spock + '/../mphot/resources/filters/zYJ.csv'
             # name to refer to the generated file
             name_SPIRIT, system_response_SPIRIT = mphot.generate_system_response(
                 efficiencyFile_SPIRIT, filterFile_SPIRIT
@@ -2231,12 +2264,7 @@ class Schedules:
 
 
         else:
-            if (filt_ == 'z\'') or (filt_ == 'r\'') or (filt_ == 'i\'') or (filt_ == 'g\''):
-                filt_ = filt_.replace('\'', '')
-            if filt_ != 'I+z':
-                filters = [filt_] + ['I+z', 'z', 'i', 'r']
-            else:
-                filters = ['I+z', 'z', 'i', 'r']
+            filters = ['I+z', 'z', 'i', 'r']
             filt_idx = 0
             filt_ = filters[filt_idx]
 
@@ -2277,6 +2305,7 @@ class Schedules:
             except FileNotFoundError:
                 print(Fore.GREEN + 'INFO: ' + Fore.BLACK + ' Re-running the grid for mphot, can take 30s')
                 result = mphot.get_precision_gaia(props_telescope_ANDOR, props_sky, source_id=gaia_id, Teff=Teff_target, override_grid=True)
+                raise
             # extract exposure time
             image_precision, binned_precision, components = result
             exposure_time = components["t [s]"]
@@ -2421,7 +2450,8 @@ def read_night_block(telescope, day):
         nightb = requests.get(nightb_url, auth=(user_portal, pwd_portal))
 
         if nightb.status_code == 404:
-            sys.exit(Fore.RED + 'ERROR:  ' + Fore.BLACK + ' No plans on the server for this date')
+            pass
+            #print(Fore.GREEN + 'INFO:  ' + Fore.BLACK + ' No plans on the server for this date')
         else:
             open(path_local, 'wb').write(nightb.content)
             scheduler_table = pd.read_csv(path_local, delimiter=' ',

@@ -377,63 +377,6 @@ def saintex_planned_targets(date_is):
     targets_on_saintex_telescopes = list(set(targets_on_saintex_telescopes))
     return targets_on_saintex_telescopes
 
-# def ts_planned_targets(date_is):
-#     """ tell which target are scheduled on TS on a given day
-
-#     Parameters
-#     ----------
-#     date_is : date
-#         date of day in fmt 'yyyy-mm-dd'
-
-#     Returns
-#     -------
-#     list
-#         list of targets scheduled on this TS that  day
-
-#     """
-#     telescopes = ['TS_La_Silla']
-#     targets_on_ts_telescopes = []
-#     for i in range(len(telescopes)):
-#         night_block_str = '/night_blocks_' + telescopes[i] + '_' + str(date_is) + '.txt'
-#         path = path_spock + '/DATABASE/' + telescopes[i] + '/Archive_night_blocks/' + night_block_str
-#         try:
-#             c = pd.read_csv(path, delimiter=' ', index_col=False)
-#             for tar in c['target']:
-#                 targets_on_ts_telescopes.append(tar)
-#         except FileNotFoundError:
-#             print(Fore.YELLOW + 'WARNING: ' + Fore.BLACK + ' No plans in your local file for  ' + telescopes[i] +
-#                   ' on the ' + str(date_is))
-#     return targets_on_ts_telescopes
-
-
-# def tn_planned_targets(date_is):
-#     """ tell which target are scheduled on TN on a given day
-
-#     Parameters
-#     ----------
-#     date_is : date
-#         date of day in fmt 'yyyy-mm-dd'
-
-#     Returns
-#     -------
-#     list
-#         list of targets scheduled on this TN that  day
-
-#     """
-#     telescopes = ['TN_Oukaimeden']
-#     targets_on_tn_telescopes = []
-#     for i in range(len(telescopes)):
-#         night_block_str = '/night_blocks_' + telescopes[i] + '_' + str(date_is) + '.txt'
-#         path = path_spock + '/DATABASE/' + telescopes[i] + '/Archive_night_blocks/' + night_block_str
-#         try:
-#             c = pd.read_csv(path, delimiter=' ', index_col=False)
-#             for tar in c['target']:
-#                 targets_on_tn_telescopes.append(tar)
-#         except FileNotFoundError:
-#             print(Fore.YELLOW + 'WARNING: ' + Fore.BLACK + ' No plans in your local file for  ' + telescopes[i] +
-#                   ' on the ' + str(date_is))
-#     return targets_on_tn_telescopes
-
 
 def target_list_good_coord_format(path_target_list):
     """ Give target corrdinates in ICRS format (used for astropy.coordinates SkyCoord function)
@@ -801,13 +744,13 @@ def upload_plans(day, nb_days, telescope):
 
     # path_database = os.path.join('speculoos@appcs.ra.phy.cam.ac.uk:/appct/data/SPECULOOSPipeline/',
     #                              telescope, 'schedule')
-    path_gant_chart = os.path.join(path_spock + '/SPOCK_Figures/Preview_schedule.html')
-    path_gant_chart_masterfile = os.path.join('/Users/elsaducrot/spock_2/SPOCK_Files/spock_stats_masterfile.csv')
-    path_database_home = \
-        os.path.join('speculoos@appcs.ra.phy.cam.ac.uk:/appct/data/SPECULOOSPipeline/spock_files/Preview_schedule.html')
-    path_database_home_masterfile = \
-        os.path.join('speculoos@appcs.ra.phy.cam.ac.uk:/appct/data/SPECULOOSPipeline/spock_files/'
-                     'spock_stats_masterfile.csv')
+    # path_gant_chart = os.path.join(path_spock + '/SPOCK_Figures/Preview_schedule.html')
+    # path_gant_chart_masterfile = os.path.join('/Users/elsaducrot/spock_2/SPOCK_Files/spock_stats_masterfile.csv')
+    # path_database_home = \
+    #     os.path.join('speculoos@appcs.ra.phy.cam.ac.uk:/appct/data/SPECULOOSPipeline/spock_files/Preview_schedule.html')
+    # path_database_home_masterfile = \
+    #     os.path.join('speculoos@appcs.ra.phy.cam.ac.uk:/appct/data/SPECULOOSPipeline/spock_files/'
+    #                  'spock_stats_masterfile.csv')
     # print(Fore.GREEN + 'INFO: ' + Fore.BLACK + ' Path local \'Gant chart\' = ', path_gant_chart)
     # print(Fore.GREEN + 'INFO: ' + Fore.BLACK + ' Path database \'Gant chart\' = ',  path_database_home)
     # subprocess.Popen(["sshpass", "-p", pwd_appcs, "scp", "-r", path_gant_chart, path_database_home])
@@ -1180,8 +1123,8 @@ class Schedules:
         df_google_doc = pd.DataFrame({'Target': target_observed_tstn, ' Observation Hours ': hours_observed_tstn,
                                       'telescope': telescopes})
         df_google_doc.to_csv(path_spock + '/survey_hours/ObservationHours_TRAPPIST.txt', sep=',', index=False)
-        subprocess.Popen(["sshpass", "-p", pwd_appcs, "scp", path_spock + '/survey_hours/ObservationHours_TRAPPIST.txt',
-                          'speculoos@appcs.ra.phy.cam.ac.uk:/appct/data/SPECULOOSPipeline/spock_files/survey_hours/'])
+        # subprocess.Popen(["sshpass", "-p", pwd_appcs, "scp", path_spock + '/survey_hours/ObservationHours_TRAPPIST.txt',
+        #                   'speculoos@appcs.ra.phy.cam.ac.uk:/appct/data/SPECULOOSPipeline/spock_files/survey_hours/'])
 
     def update_nb_hours_sno(self):
         get_hours_files_sno()
@@ -1791,41 +1734,41 @@ class Schedules:
                            })
             self.priority = Table.from_pandas(df_priority)
 
-    def shift_hours_observation(self, target):
+    # def shift_hours_observation(self, target):
 
-        date_format = "%Y-%m-%d %H:%M:%S.%f"
+    #     date_format = "%Y-%m-%d %H:%M:%S.%f"
 
-        if self.priority[self.priority['target_name']==target['target_name']]['set']:#[idx_target] == 'set':
-            set_time_begin = datetime.strptime(self.observatory.target_set_time(self.date_range[0],
-                                                                                [t for t in self.targets if t.name == target['target_name']],
-                                                                                which='next', horizon=24 * u.deg).iso,
-                                               date_format)
-            set_time_end = datetime.strptime(self.observatory.target_set_time(self.date_range[1],
-                                                                              [t for t in self.targets if t.name == target['target_name']],
-                                                                              which='next', horizon=24 * u.deg).iso,
-                                             date_format)
-            shift_hours_observation = (set_time_begin.hour +
-                                       set_time_begin.minute / 60 - set_time_end.hour - set_time_end.minute / 60)
+    #     if self.priority[self.priority['target_name']==target['target_name']]['set']:#[idx_target] == 'set':
+    #         set_time_begin = datetime.strptime(self.observatory.target_set_time(self.date_range[0],
+    #                                                                             [t for t in self.targets if t.name == target['target_name']],
+    #                                                                             which='next', horizon=24 * u.deg).iso,
+    #                                            date_format)
+    #         set_time_end = datetime.strptime(self.observatory.target_set_time(self.date_range[1],
+    #                                                                           [t for t in self.targets if t.name == target['target_name']],
+    #                                                                           which='next', horizon=24 * u.deg).iso,
+    #                                          date_format)
+    #         shift_hours_observation = (set_time_begin.hour +
+    #                                    set_time_begin.minute / 60 - set_time_end.hour - set_time_end.minute / 60)
 
-        if self.priority[self.priority['target_name']==target['target_name']]['rise']:#[idx_target] == 'rise':
-            rise_time_begin = datetime.strptime(self.observatory.target_rise_time(self.date_range[0],
-                                                                                  [t for t in self.targets if t.name == target['target_name']],
-                                                                                  which='next', horizon=24 * u.deg).iso,
-                                                date_format)
-            rise_time_end = datetime.strptime(self.observatory.target_rise_time(self.date_range[1],
-                                                                                [t for t in self.targets if t.name == target['target_name']],
-                                                                                which='next', horizon=24 * u.deg).iso,
-                                              date_format)
-            shift_hours_observation = (rise_time_end.hour + rise_time_end.minute / 60 - rise_time_begin.hour -
-                                       rise_time_begin.minute / 60)
+    #     if self.priority[self.priority['target_name']==target['target_name']]['rise']:#[idx_target] == 'rise':
+    #         rise_time_begin = datetime.strptime(self.observatory.target_rise_time(self.date_range[0],
+    #                                                                               [t for t in self.targets if t.name == target['target_name']],
+    #                                                                               which='next', horizon=24 * u.deg).iso,
+    #                                             date_format)
+    #         rise_time_end = datetime.strptime(self.observatory.target_rise_time(self.date_range[1],
+    #                                                                             [t for t in self.targets if t.name == target['target_name']],
+    #                                                                             which='next', horizon=24 * u.deg).iso,
+    #                                           date_format)
+    #         shift_hours_observation = (rise_time_end.hour + rise_time_end.minute / 60 - rise_time_begin.hour -
+    #                                    rise_time_begin.minute / 60)
 
-        if self.priority[self.priority['target_name']==target['target_name']]['both']:#[idx_target] == 'both':
-            shift_hours_observation = 0
+    #     if self.priority[self.priority['target_name']==target['target_name']]['both']:#[idx_target] == 'both':
+    #         shift_hours_observation = 0
 
-        else:
-            shift_hours_observation = 0
+    #     else:
+    #         shift_hours_observation = 0
 
-        return shift_hours_observation  # hours
+    #     return shift_hours_observation  # hours
 
     def schedule_blocks(self, day):
         """
@@ -2045,278 +1988,6 @@ class Schedules:
         self.observability_table_day['ever observable'][idx_not_visible_mid_night[0]] = False
 
         return self.observability_table_day
-
-    # def is_constraints_met_first_target(self, t):
-    #     """
-
-    #     Parameters
-    #     ----------
-    #     t
-
-    #     Returns
-    #     -------
-
-    #     """
-
-    #     # if t == 4:
-    #     #     print()
-    #     dt_1day = Time('2018-01-02 00:00:00', scale='tcg') - Time('2018-01-01 00:00:00', scale='tcg')
-
-    #     # is_moon_constraint_met_first_target = \
-    #     #     self.moon_and_visibility_constraint_table['ever observable'][self.idx_first_target]
-    #     #hours_constraint_first = self.is_constraint_hours(self.idx_first_target)
-
-    #     idx_safe = 1
-    #     idx_safe_1rst_set = 1
-    #     idx_safe_1rst_rise = 1
-    #     moon_idx_set_target = 0
-    #     moon_idx_rise_target = 0
-
-    #     # if self.telescope == "Callisto":
-    #     #     df_observable_fields_SPIRIT = pd.read_csv(path_spock + "/target_lists/observable_fields_SPIRIT.csv", sep=',')
-    #     #     if np.any((df_observable_fields_SPIRIT["Sp_ID"] == self.first_target["Sp_ID"])):
-    #     #         is_constraints_spirit_field_met_first_target = True
-    #     #     else:
-    #     #         is_constraints_spirit_field_met_first_target = False
-    #     #         hours_constraint_first = False
-    #     #         print(Fore.YELLOW + 'WARNING: ' + Fore.BLACK +
-    #     #         ' the second target did respect the constraints but is NOT in SPIRIT observable fields')
-
-    #     while not (is_moon_constraint_met_first_target & hours_constraint_first):
-
-    #         before_change_first_target = self.priority[self.idx_first_target]
-
-    #         if before_change_first_target['set or rise'] == 'set':
-    #             moon_idx_set_target += 1
-    #             if moon_idx_set_target >= len(self.idx_set_targets_sorted):
-    #                 idx_safe_1rst_set += 1
-    #                 self.idx_first_target = self.index_prio[-idx_safe_1rst_set]
-    #                 self.first_target = self.priority[self.idx_first_target]
-    #                 is_moon_constraint_met_first_target = \
-    #                     self.moon_and_visibility_constraint_table['ever observable'][self.idx_first_target]
-    #                 hours_constraint_first = self.is_constraint_hours(self.idx_first_target)
-    #             else:
-    #                 self.idx_first_target = self.idx_set_targets_sorted[-moon_idx_set_target]
-    #                 self.first_target = self.priority[self.idx_first_target]
-    #                 if self.priority['priority'][self.idx_first_target] != float('-inf'):
-    #                     is_moon_constraint_met_first_target = \
-    #                         self.moon_and_visibility_constraint_table['ever observable'][self.idx_first_target]
-    #                     hours_constraint_first = self.is_constraint_hours(self.idx_first_target)
-    #                 else:
-    #                     is_moon_constraint_met_first_target = False
-    #                     hours_constraint_first = False
-
-    #         elif before_change_first_target['set or rise'] == 'rise' and not is_moon_constraint_met_first_target:
-    #             moon_idx_rise_target += 1
-    #             if moon_idx_rise_target >= len(self.idx_rise_targets_sorted):
-    #                 idx_safe_1rst_rise += 1
-    #                 self.idx_first_target = self.index_prio[-idx_safe_1rst_rise]
-    #                 self.first_target = self.priority[self.idx_first_target]
-    #                 is_moon_constraint_met_first_target = \
-    #                     self.moon_and_visibility_constraint_table['ever observable'][self.idx_first_target]
-    #                 hours_constraint_first = self.is_constraint_hours(self.idx_first_target)
-    #             else:
-    #                 self.idx_first_target = self.idx_rise_targets_sorted[-moon_idx_rise_target]
-    #                 self.first_target = self.priority[self.idx_first_target]
-    #                 if self.priority['priority'][self.idx_first_target] != float('-inf'):
-    #                     is_moon_constraint_met_first_target = \
-    #                         self.moon_and_visibility_constraint_table['ever observable'][self.idx_first_target]
-    #                     hours_constraint_first = self.is_constraint_hours(self.idx_first_target)
-    #                 else:
-    #                     is_moon_constraint_met_first_target = False
-    #                     hours_constraint_first = False
-
-    #         elif (before_change_first_target['set or rise'] != 'rise') and \
-    #                 (before_change_first_target['set or rise'] != 'set') and not is_moon_constraint_met_first_target:
-    #             idx_safe += 1
-    #             self.idx_first_target = self.index_prio[-idx_safe]
-    #             self.first_target = self.priority[self.idx_first_target]
-    #             is_moon_constraint_met_first_target = \
-    #                 self.moon_and_visibility_constraint_table['ever observable'][self.idx_first_target]
-    #             hours_constraint_first = self.is_constraint_hours(self.idx_first_target)
-
-                                
-    #         elif self.telescope == "Callisto":
-    #             df_observable_fields_SPIRIT = pd.read_csv(path_spock + "/target_lists/observable_fields_SPIRIT.csv", sep=',')
-    #             if np.any((df_observable_fields_SPIRIT["Sp_ID"] == self.first_target["Sp_ID"])):
-    #                 is_constraints_spirit_field_met_first_target = True
-    #             else:
-    #                 is_constraints_spirit_field_met_first_target = False
-    #                 hours_constraint_first = False
-    #                 print(Fore.YELLOW + 'WARNING: ' + Fore.BLACK +
-    #                 ' the second target did respect the constraints but is NOT in SPIRIT observable fields')
-
-
-    #     if is_moon_constraint_met_first_target and hours_constraint_first:
-    #         if self.telescope == "Callisto":
-    #             if is_constraints_spirit_field_met_first_target:
-    #                 is_constraints_met_first_target = True
-    #             else:
-    #                 is_constraints_met_first_target = False
-    #         else:
-    #             is_constraints_met_first_target = True
-    #     else:
-    #         is_constraints_met_first_target = False
-    #     return is_constraints_met_first_target
-
-    # def is_constraints_met_second_target(self, t):
-    #     """
-
-    #     Parameters
-    #     ----------
-    #     t
-
-    #     Returns
-    #     -------
-
-    #     """
-
-    #     dt_1day = Time('2018-01-02 00:00:00', scale='tcg') - Time('2018-01-01 00:00:00', scale='tcg')
-
-    #     is_moon_constraint_met_second_target = self.moon_and_visibility_constraint_table['ever observable'][
-    #         self.idx_second_target]
-    #     hours_constraint_second = self.is_constraint_hours(self.idx_second_target)
-
-    #     idx_safe = 1
-    #     idx_safe_2nd_set = 1
-    #     idx_safe_2nd_rise = 1
-    #     moon_idx_set_target = 0
-    #     moon_idx_rise_target = 0
-
-    #     if self.idx_first_target == self.idx_second_target:
-    #         print(Fore.GREEN + 'INFO: ' + Fore.BLACK + ' 2nd = 1ere ')
-    #     if self.idx_second_target is None:
-    #         print(Fore.GREEN + 'INFO: ' + Fore.BLACK + ' No second target for that night')
-
-    #     if self.telescope == "Callisto":
-    #         df_observable_fields_SPIRIT = pd.read_csv(path_spock + "/target_lists/observable_fields_SPIRIT.csv", sep=',')
-    #         if np.any((df_observable_fields_SPIRIT["Sp_ID"] == self.second_target["Sp_ID"])):
-    #             is_constraints_spirit_field_met_second_target = True
-    #         else:
-    #             is_constraints_spirit_field_met_second_target = False
-    #             hours_constraint_second = False
-    #             print(Fore.YELLOW + 'WARNING: ' + Fore.BLACK +
-    #             ' the second target did respect the constraints but is NOT in SPIRIT observable fields')
-
-    #     while not (is_moon_constraint_met_second_target & hours_constraint_second):
-
-    #         before_change_second_target = self.priority[self.idx_second_target]
-
-    #         if before_change_second_target['set or rise'] == 'set':
-    #             moon_idx_set_target += 1
-    #             if moon_idx_set_target >= len(self.idx_set_targets_sorted):
-    #                 idx_safe_2nd_set += 1
-    #                 self.idx_second_target = self.index_prio[-idx_safe_2nd_set]
-    #                 self.second_target = self.priority[self.idx_second_target]
-    #                 is_moon_constraint_met_second_target = \
-    #                 self.moon_and_visibility_constraint_table['ever observable'][self.idx_second_target]
-    #                 hours_constraint_second = self.is_constraint_hours(self.idx_second_target)
-    #             else:
-    #                 self.idx_second_target = self.idx_set_targets_sorted[-(moon_idx_set_target)]
-    #                 self.second_target = self.priority[self.idx_second_target]
-    #                 if self.priority['priority'][self.idx_second_target] != float('-inf'):
-    #                     is_moon_constraint_met_second_target = \
-    #                     self.moon_and_visibility_constraint_table['ever observable'][self.idx_second_target]
-    #                     hours_constraint_second = self.is_constraint_hours(self.idx_second_target)
-    #                 else:
-    #                     is_moon_constraint_met_second_target = False
-    #                     hours_constraint_second = False
-
-    #         elif before_change_second_target['set or rise'] == 'rise':
-    #             moon_idx_rise_target += 1
-    #             if moon_idx_rise_target >= len(self.idx_rise_targets_sorted):
-    #                 idx_safe_2nd_rise += 1
-    #                 self.idx_second_target = self.index_prio[-idx_safe_2nd_rise]
-    #                 self.second_target = self.priority[self.idx_second_target]
-    #                 is_moon_constraint_met_second_target = \
-    #                 self.moon_and_visibility_constraint_table['ever observable'][self.idx_second_target]
-    #                 hours_constraint_second = self.is_constraint_hours(self.idx_second_target)
-    #             else:
-    #                 self.idx_second_target = self.idx_rise_targets_sorted[-(moon_idx_rise_target)]
-    #                 self.second_target = self.priority[self.idx_second_target]
-    #                 if self.priority['priority'][self.idx_second_target] != float('-inf'):
-    #                     is_moon_constraint_met_second_target = \
-    #                     self.moon_and_visibility_constraint_table['ever observable'][self.idx_second_target]
-    #                     hours_constraint_second = self.is_constraint_hours(self.idx_second_target)
-    #                 else:
-    #                     is_moon_constraint_met_second_target = False
-    #                     hours_constraint_second = False
-
-    #         elif (before_change_second_target['set or rise'] != 'rise') and (
-    #                 before_change_second_target['set or rise'] != 'set'):
-    #             if self.first_target['set or rise'] == 'rise':
-    #                 moon_idx_set_target += 1
-    #                 if moon_idx_set_target >= len(self.idx_set_targets_sorted):
-    #                     idx_safe_2nd_set += 1
-    #                     self.idx_second_target = self.index_prio[-idx_safe_2nd_set]
-    #                     self.second_target = self.priority[self.idx_second_target]
-    #                     is_moon_constraint_met_second_target = \
-    #                     self.moon_and_visibility_constraint_table['ever observable'][self.idx_second_target]
-    #                     hours_constraint_second = self.is_constraint_hours(self.idx_second_target)
-    #                 else:
-    #                     self.idx_second_target = self.idx_set_targets_sorted[-(moon_idx_set_target)]
-    #                     self.second_target = self.priority[self.idx_second_target]
-    #                     if self.priority['priority'][self.idx_second_target] != float('-inf'):
-    #                         is_moon_constraint_met_second_target = \
-    #                         self.moon_and_visibility_constraint_table['ever observable'][self.idx_second_target]
-    #                         hours_constraint_second = self.is_constraint_hours(self.idx_second_target)
-    #                     else:
-    #                         is_moon_constraint_met_second_target = False
-    #                         hours_constraint_second = False
-
-    #             if self.first_target['set or rise'] == 'set':
-    #                 moon_idx_rise_target += 1
-    #                 if moon_idx_rise_target >= len(self.idx_rise_targets_sorted):
-    #                     idx_safe_2nd_rise += 1
-    #                     self.idx_second_target = self.index_prio[-idx_safe_2nd_rise]
-    #                     self.second_target = self.priority[self.idx_second_target]
-    #                     is_moon_constraint_met_second_target = \
-    #                     self.moon_and_visibility_constraint_table['ever observable'][self.idx_second_target]
-    #                     hours_constraint_second = self.is_constraint_hours(self.idx_second_target)
-
-    #                 else:
-    #                     self.idx_second_target = self.idx_rise_targets_sorted[-(moon_idx_rise_target)]
-    #                     self.second_target = self.priority[self.idx_second_target]
-    #                     if self.priority['priority'][self.idx_second_target] != float('-inf'):
-    #                         is_moon_constraint_met_second_target = \
-    #                         self.moon_and_visibility_constraint_table['ever observable'][self.idx_second_target]
-    #                         hours_constraint_second = self.is_constraint_hours(self.idx_second_target)
-    #                     else:
-    #                         is_moon_constraint_met_second_target = False
-    #                         hours_constraint_second = False
-
-    #             if self.first_target['set or rise'] == 'both':
-    #                 self.idx_second_target = self.idx_first_target
-    #                 self.second_target = self.first_target
-    #                 # is_moon_constraint_met_second_target = self.is_moon_and_visibility_constraint(t)
-    #                 is_moon_constraint_met_second_target = \
-    #                 self.moon_and_visibility_constraint_table['ever observable'][self.idx_second_target]
-    #                 hours_constraint_second = self.is_constraint_hours(self.idx_second_target)
-                
-    #         elif self.telescope == "Callisto":
-    #             df_observable_fields_SPIRIT = pd.read_csv(path_spock + "/target_lists/observable_fields_SPIRIT.csv", sep=',')
-    #             if np.any((df_observable_fields_SPIRIT["Sp_ID"] == self.second_target["Sp_ID"])):
-    #                 is_constraints_spirit_field_met_second_target = True
-    #             else:
-    #                 is_constraints_spirit_field_met_second_target = False
-    #                 hours_constraint_second = False
-    #                 print(Fore.YELLOW + 'WARNING: ' + Fore.BLACK +
-    #                 ' the second target did respect the constraints but is NOT in SPIRIT observable fields')
-
-
-    #     if is_moon_constraint_met_second_target and hours_constraint_second:
-    #         if self.telescope == "Callisto":
-    #             if is_constraints_spirit_field_met_second_target:
-    #                 is_constraints_met_second_target = True
-    #             else:
-    #                 is_constraints_met_second_target = False
-    #         else:
-    #             is_constraints_met_second_target = True
-    #     else:
-    #         is_constraints_met_second_target = False
-
-
-    #     return is_constraints_met_second_target
     
     def update_hours(self,day,target):
         """

@@ -135,7 +135,6 @@ def upload_np(t_now, nb_day, telescope):
 
             # Astra
             csv_file = telescope + "_" + str(t_now) + ".csv"
-            jsonl_file = telescope + "_" + str(t_now) + ".jsonl"
             path_database_astra = os.path.join(
                 "../../appct/data/SPECULOOSPipeline/Observations/",
                 telescope,
@@ -143,11 +142,8 @@ def upload_np(t_now, nb_day, telescope):
                 "Astra",
                 csv_file,
             )
-            path_local_astra_csv = os.path.join(
+            path_local_astra = os.path.join(
                 path_spock + "/DATABASE/", telescope, "Astra/", csv_file
-            )
-            path_local_astra_jsonl = os.path.join(
-                path_spock + "/DATABASE/", telescope, "Astra/", jsonl_file
             )
 
             if (
@@ -190,47 +186,24 @@ def upload_np(t_now, nb_day, telescope):
                     "Zip Plans_by_dates folder uploaded on the HUB for",
                     telescope,
                 )
-                if (telescope == "Callisto"):
-                    
-                    sftp_cambridge.put(path_local_astra_jsonl, path_database_astra)
-                    print(
+
+                sftp_cambridge.put(path_local_astra, path_database_astra)
+                print(
                     "----->",
                     t_now,
                     "Astra folder updated on the Cambridge server for",
                     telescope,
-                    )
+                )
+                if (telescope == "Callisto") or (telescope == "Ganymede"):
                     path_hub_astra = os.path.normpath(
                         os.path.join(
                             "/home/speculoos/Plans_scheduler/",
                             telescope,
                             "Astra/",
-                            jsonl_file,
+                            csv_file,
                         )
                     )
-                    sftp_SSO_hub.put(path_local_astra_jsonl, path_hub_astra)
-                    print(
-                        "----->",
-                        t_now,
-                        "Astra folder updated on the HUB for",
-                        telescope,
-                    )
-                else:
-                    sftp_cambridge.put(path_local_astra_csv, path_database_astra)
-                    print(
-                    "----->",
-                    t_now,
-                    "Astra folder updated on the Cambridge server for",
-                    telescope,
-                    )
-                    path_hub_astra = os.path.normpath(
-                    os.path.join(
-                        "/home/speculoos/Plans_scheduler/",
-                        telescope,
-                        "Astra/",
-                        csv_file,
-                    )
-                    )
-                    sftp_SSO_hub.put(path_local_astra_csv, path_hub_astra)
+                    sftp_SSO_hub.put(path_local_astra, path_hub_astra)
                     print(
                         "----->",
                         t_now,

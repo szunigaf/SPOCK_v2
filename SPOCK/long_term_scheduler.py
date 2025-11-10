@@ -1254,7 +1254,9 @@ class Schedules:
 
             for t in tqdm(range(0, self.date_range_in_days), desc="Scheduling "):
                 pass
+                print('--------------------------')
                 print(Fore.GREEN + 'INFO: ' + Fore.BLACK + ' day is : ', Time(self.date_range[0] + t).iso)
+                print('--------------------------')
                 self.day = self.date_ranges_day_by_day[t]
                 self.time_of_night(self.day)
                 # horizon_for_set_and_rise = -12 *u.degree
@@ -1350,7 +1352,7 @@ class Schedules:
                 self.priority_ranked['texp_spc'][self.idx_second_target] = 300 #s
                 print(Fore.RED + 'ERROR: ' + Fore.BLACK + ' Problem with mphot grid generation for target ' +
                       self.first_target['target_name'] + ', check parallax on astroquery')
-            print('total_hours',total_hours, 'texp', self.priority_ranked['texp_spc'][self.idx_first_target])
+            print('total_hours',total_hours.value[0],'h', 'texp', self.priority_ranked['texp_spc'][self.idx_first_target].value[0],'s')
             if (total_hours > 200) | (self.priority_ranked['texp_spc'][self.idx_first_target] > 180):
                 self.first_target = self.priority_ranked[np.argmax(self.priority_ranked['priority'])-j]
                 print(Fore.YELLOW + 'WARNING: ' + Fore.BLACK + ' this first target will exceed 200 hours observed or has texp>180s, looking for the next one')
@@ -1375,7 +1377,7 @@ class Schedules:
                 print(Fore.RED + 'ERROR: ' + Fore.BLACK + ' Problem with mphot grid generation for target ' +
                       self.second_target['target_name'] + ', check parallax on astroquery')
             total_hours_second = nb_hours_df['nb_hours_observed'] + nb_hours_df['nb_hours_planned']
-            print('total_hours_second',total_hours_second, 'texp', self.priority_ranked['texp_spc'][self.idx_second_target])
+            print('total_hours second target of the night',total_hours_second.value[0],'h', 'texp', self.priority_ranked['texp_spc'][self.idx_second_target].value[0],'s')
             if (total_hours_second>200) | (self.priority_ranked['texp_spc'][self.idx_second_target] > 180):
                 print(Fore.YELLOW + 'WARNING: ' + Fore.BLACK + ' this second target will exceed 200 hours observed or has texp>180s, looking for the next one')
                 self.second_target = self.priority_ranked[i-1]

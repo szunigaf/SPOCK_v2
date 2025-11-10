@@ -581,7 +581,7 @@ def airmass_altitude_plot_nolist(name_observatory, day, target, ra, dec):
 
     # Moon distance
     t_midnight = Time(sun_rise) - ((Time(sun_rise) - Time(sun_set)) / 2)
-    moon = get_moon(time=t_midnight, location=observatory.location)
+    moon = get_body("moon",time=t_midnight, location=observatory.location)
     distance_moon = round(float(moon.separation(SkyCoord(ra=ra, dec=dec, unit=(u.deg, u.deg))).value), 2)
 
     plot_styles = {'linestyle': '-', 'color': 'k'}

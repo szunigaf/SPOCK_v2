@@ -529,12 +529,12 @@ def make_astra_schedule_file(day, nb_days, telescope):
         df = pd.DataFrame(open_row, columns=["device_name",	"action_type",	"action_value",
                                              "start_time",	"end_time"])
 
-        # Dome
-        dome_row = pd.Series({	"device_name": "dome_"+str(telescope).replace("-",""),
-                             "action_type": "SlewToAzimuth",	"action_value": 230,
-                             "start_time": location.sun_set_time(t, which='next').iso,
-                              "end_time": location.sun_rise_time(t, which='next').iso})
-        df = pd.concat([df, pd.DataFrame([dome_row])], ignore_index=True)
+        # # Dome
+        # dome_row = pd.Series({	"device_name": "dome_"+str(telescope).replace("-",""),
+        #                      "action_type": "SlewToAzimuth",	"action_value": 230,
+        #                      "start_time": location.sun_set_time(t, which='next').iso,
+        #                       "end_time": location.sun_rise_time(t, which='next').iso})
+        # df = pd.concat([df, pd.DataFrame([dome_row])], ignore_index=True)
         # Flats
         def custom_sort(arr, custom_order):
             # Create a dictionary to store the index of each element in the custom order

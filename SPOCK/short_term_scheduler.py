@@ -19,6 +19,7 @@ from eScheduler.spe_schedule import SPECULOOSScheduler, Schedule, ObservingBlock
 import gspread
 import matplotlib.pyplot as plt
 import mphot
+# path_mphot = mphot.__file__.replace('__init__.py', '')
 import numpy as np
 from oauth2client.service_account import ServiceAccountCredentials
 import os
@@ -30,8 +31,7 @@ import subprocess
 import sys
 import shutil
 import SPOCK.ETC as ETC
-from SPOCK import user_portal, pwd_portal, pwd_appcs, path_spock, path_credential_json, target_list_from_stargate_path
-import SPOCK.mphot_local as mphot_local
+from SPOCK import user_portal, pwd_portal, pwd_appcs, path_spock, path_credential_json, target_list_from_stargate_path, path_mphot
 from requests.exceptions import ConnectionError
 
 scope = ['https://spreadsheets.google.com/feeds',
@@ -1065,8 +1065,8 @@ class Schedules:
             # possible filters = ['zYJ','J','H']
 
             #mphot computation
-            efficiencyFile_SPIRIT = path_spock + '/Notebooks/mphot/resources/systems/speculoos_PIRT_1280SciCam_-60.csv'
-            filterFile_SPIRIT = path_spock + '/Notebooks/mphot/resources/filters/'+filt_+'.csv'
+            efficiencyFile_SPIRIT = path_mphot + '/resources/systems/speculoos_PIRT_1280SciCam_-60.csv'
+            filterFile_SPIRIT = path_mphot + '/resources/filters/'+filt_+'.csv'
             # name to refer to the generated file
             name_SPIRIT, system_response_SPIRIT = mphot.generate_system_response(
                 efficiencyFile_SPIRIT, filterFile_SPIRIT
@@ -1113,8 +1113,8 @@ class Schedules:
             filt_ = filters[filt_idx]
 
             #mphot computation
-            efficiencyFile_ANDOR = path_spock + '/Notebooks/mphot/resources/systems/speculoos_Andor_iKon-L-936_-60.csv'
-            filterFile_ANDOR = path_spock + '/Notebooks/mphot/resources/filters/'+str(filt_)+'.csv'
+            efficiencyFile_ANDOR = path_mphot + '/resources/systems/speculoos_Andor_iKon-L-936_-60.csv'
+            filterFile_ANDOR = path_mphot + '/resources/filters/'+str(filt_)+'.csv'
             # name to refer to the generated file
             name_ANDOR, system_response_ANDOR = mphot.generate_system_response(
                 efficiencyFile_ANDOR, filterFile_ANDOR
@@ -1160,8 +1160,8 @@ class Schedules:
 
                 filt_idx += 1
                 filt_ = filters[filt_idx]
-                efficiencyFile_ANDOR = path_spock + '/Notebooks/mphot/resources/systems/speculoos_Andor_iKon-L-936_-60.csv'
-                filterFile_ANDOR = path_spock + '/Notebooks/mphot/resources/filters/'+str(filt_)+'.csv'
+                efficiencyFile_ANDOR = path_spock + '/resources/systems/speculoos_Andor_iKon-L-936_-60.csv'
+                filterFile_ANDOR = path_spock + '/resources/filters/'+str(filt_)+'.csv'
                 # name to refer to the generated file
                 name_ANDOR, system_response_ANDOR = mphot.generate_system_response(
                     efficiencyFile_ANDOR, filterFile_ANDOR

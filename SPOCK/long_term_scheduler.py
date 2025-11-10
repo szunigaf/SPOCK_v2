@@ -1738,41 +1738,41 @@ class Schedules:
                            })
             self.priority = Table.from_pandas(df_priority)
 
-    # def shift_hours_observation(self, target):
+    def shift_hours_observation(self, target):
 
-    #     date_format = "%Y-%m-%d %H:%M:%S.%f"
+        date_format = "%Y-%m-%d %H:%M:%S.%f"
 
-    #     if self.priority[self.priority['target_name']==target['target_name']]['set']:#[idx_target] == 'set':
-    #         set_time_begin = datetime.strptime(self.observatory.target_set_time(self.date_range[0],
-    #                                                                             [t for t in self.targets if t.name == target['target_name']],
-    #                                                                             which='next', horizon=24 * u.deg).iso,
-    #                                            date_format)
-    #         set_time_end = datetime.strptime(self.observatory.target_set_time(self.date_range[1],
-    #                                                                           [t for t in self.targets if t.name == target['target_name']],
-    #                                                                           which='next', horizon=24 * u.deg).iso,
-    #                                          date_format)
-    #         shift_hours_observation = (set_time_begin.hour +
-    #                                    set_time_begin.minute / 60 - set_time_end.hour - set_time_end.minute / 60)
+        if self.priority[self.priority['target_name']==target['target_name']]['set']:#[idx_target] == 'set':
+            set_time_begin = datetime.strptime(self.observatory.target_set_time(self.date_range[0],
+                                                                                [t for t in self.targets if t.name == target['target_name']],
+                                                                                which='next', horizon=24 * u.deg).iso,
+                                               date_format)
+            set_time_end = datetime.strptime(self.observatory.target_set_time(self.date_range[1],
+                                                                              [t for t in self.targets if t.name == target['target_name']],
+                                                                              which='next', horizon=24 * u.deg).iso,
+                                             date_format)
+            shift_hours_observation = (set_time_begin.hour +
+                                       set_time_begin.minute / 60 - set_time_end.hour - set_time_end.minute / 60)
 
-    #     if self.priority[self.priority['target_name']==target['target_name']]['rise']:#[idx_target] == 'rise':
-    #         rise_time_begin = datetime.strptime(self.observatory.target_rise_time(self.date_range[0],
-    #                                                                               [t for t in self.targets if t.name == target['target_name']],
-    #                                                                               which='next', horizon=24 * u.deg).iso,
-    #                                             date_format)
-    #         rise_time_end = datetime.strptime(self.observatory.target_rise_time(self.date_range[1],
-    #                                                                             [t for t in self.targets if t.name == target['target_name']],
-    #                                                                             which='next', horizon=24 * u.deg).iso,
-    #                                           date_format)
-    #         shift_hours_observation = (rise_time_end.hour + rise_time_end.minute / 60 - rise_time_begin.hour -
-    #                                    rise_time_begin.minute / 60)
+        if self.priority[self.priority['target_name']==target['target_name']]['rise']:#[idx_target] == 'rise':
+            rise_time_begin = datetime.strptime(self.observatory.target_rise_time(self.date_range[0],
+                                                                                  [t for t in self.targets if t.name == target['target_name']],
+                                                                                  which='next', horizon=24 * u.deg).iso,
+                                                date_format)
+            rise_time_end = datetime.strptime(self.observatory.target_rise_time(self.date_range[1],
+                                                                                [t for t in self.targets if t.name == target['target_name']],
+                                                                                which='next', horizon=24 * u.deg).iso,
+                                              date_format)
+            shift_hours_observation = (rise_time_end.hour + rise_time_end.minute / 60 - rise_time_begin.hour -
+                                       rise_time_begin.minute / 60)
 
-    #     if self.priority[self.priority['target_name']==target['target_name']]['both']:#[idx_target] == 'both':
-    #         shift_hours_observation = 0
+        if self.priority[self.priority['target_name']==target['target_name']]['both']:#[idx_target] == 'both':
+            shift_hours_observation = 0
 
-    #     else:
-    #         shift_hours_observation = 0
+        else:
+            shift_hours_observation = 0
 
-    #     return shift_hours_observation  # hours
+        return shift_hours_observation  # hours
 
     def schedule_blocks(self, day):
         """
@@ -2233,8 +2233,8 @@ class Schedules:
         if telescope == 'Callisto':
             filt_ = 'zYJ'  # filter to use for the calculation
             # files used to generate SR
-            efficiencyFile_SPIRIT = path_spock + '/../mphot/resources/systems/speculoos_PIRT_1280SciCam_-60.csv'
-            filterFile_SPIRIT = path_spock + '/../mphot/resources/filters/zYJ.csv'
+            efficiencyFile_SPIRIT = path_spock + '/Notebooks/mphot/resources/systems/speculoos_PIRT_1280SciCam_-60.csv'
+            filterFile_SPIRIT = path_spock + '/Notebooks/mphot/resources/filters/zYJ.csv'
             # name to refer to the generated file
             name_SPIRIT, system_response_SPIRIT = mphot.generate_system_response(
                 efficiencyFile_SPIRIT, filterFile_SPIRIT
@@ -2278,8 +2278,8 @@ class Schedules:
             filt_idx = 0
             filt_ = filters[filt_idx]
 
-            efficiencyFile_ANDOR = path_spock + '/../mphot/resources/systems/speculoos_Andor_iKon-L-936_-60.csv'
-            filterFile_ANDOR = path_spock + '/../mphot/resources/filters/I+z.csv'
+            efficiencyFile_ANDOR = path_spock + '/Notebooks/mphot/resources/systems/speculoos_Andor_iKon-L-936_-60.csv'
+            filterFile_ANDOR = path_spock + '/Notebooks/mphot/resources/filters/I+z.csv'
 
             # name to refer to the generated file
             name_ANDOR, system_response_ANDOR = mphot.generate_system_response(
@@ -2326,8 +2326,8 @@ class Schedules:
 
                 filt_idx += 1
                 filt_ = filters[filt_idx]
-                efficiencyFile_ANDOR = path_spock + '/../mphot/resources/systems/speculoos_Andor_iKon-L-936_-60.csv'
-                filterFile_ANDOR = path_spock + '/../mphot/resources/filters/'+str(filt_)+'.csv'
+                efficiencyFile_ANDOR = path_spock + '/Notebooks/mphot/resources/systems/speculoos_Andor_iKon-L-936_-60.csv'
+                filterFile_ANDOR = path_spock + '/Notebooks/mphot/resources/filters/'+str(filt_)+'.csv'
                 # name to refer to the generated file
                 name_ANDOR, system_response_ANDOR = mphot.generate_system_response(
                     efficiencyFile_ANDOR, filterFile_ANDOR

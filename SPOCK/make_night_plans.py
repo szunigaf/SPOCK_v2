@@ -560,7 +560,7 @@ def make_astra_schedule_file(day, nb_days, telescope):
             except ValueError:
                 (Fore.GREEN + 'INFO: ' + Fore.BLACK + " No I+z to discard for Callisto's Astra plans ")
                 pass
-        flats_row_evening = pd.Series({"device_type": "Camera",	"device_name": "camera_"+str(telescope).replace("-",""),
+        flats_row_evening = pd.Series({"device_name": "camera_"+str(telescope).replace("-",""),
                              "action_type": "flats",
                              "action_value": {"filter": filt_evening, 'n': [nb_flats]*len(filt_evening)},
                              "start_time": (location.sun_set_time(t, which='next')+15*u.min + 1*u.min).iso,

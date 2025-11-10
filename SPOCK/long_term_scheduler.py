@@ -1736,41 +1736,41 @@ class Schedules:
                            })
             self.priority = Table.from_pandas(df_priority)
 
-    # def shift_hours_observation(self, target):
+    def shift_hours_observation(self, target):
 
-    #     date_format = "%Y-%m-%d %H:%M:%S.%f"
+        date_format = "%Y-%m-%d %H:%M:%S.%f"
 
-    #     if self.priority[self.priority['target_name']==target['target_name']]['set']:#[idx_target] == 'set':
-    #         set_time_begin = datetime.strptime(self.observatory.target_set_time(self.date_range[0],
-    #                                                                             [t for t in self.targets if t.name == target['target_name']],
-    #                                                                             which='next', horizon=24 * u.deg).iso,
-    #                                            date_format)
-    #         set_time_end = datetime.strptime(self.observatory.target_set_time(self.date_range[1],
-    #                                                                           [t for t in self.targets if t.name == target['target_name']],
-    #                                                                           which='next', horizon=24 * u.deg).iso,
-    #                                          date_format)
-    #         shift_hours_observation = (set_time_begin.hour +
-    #                                    set_time_begin.minute / 60 - set_time_end.hour - set_time_end.minute / 60)
+        if self.priority[self.priority['target_name']==target['target_name']]['set']:#[idx_target] == 'set':
+            set_time_begin = datetime.strptime(self.observatory.target_set_time(self.date_range[0],
+                                                                                [t for t in self.targets if t.name == target['target_name']],
+                                                                                which='next', horizon=24 * u.deg).iso,
+                                               date_format)
+            set_time_end = datetime.strptime(self.observatory.target_set_time(self.date_range[1],
+                                                                              [t for t in self.targets if t.name == target['target_name']],
+                                                                              which='next', horizon=24 * u.deg).iso,
+                                             date_format)
+            shift_hours_observation = (set_time_begin.hour +
+                                       set_time_begin.minute / 60 - set_time_end.hour - set_time_end.minute / 60)
 
-    #     if self.priority[self.priority['target_name']==target['target_name']]['rise']:#[idx_target] == 'rise':
-    #         rise_time_begin = datetime.strptime(self.observatory.target_rise_time(self.date_range[0],
-    #                                                                               [t for t in self.targets if t.name == target['target_name']],
-    #                                                                               which='next', horizon=24 * u.deg).iso,
-    #                                             date_format)
-    #         rise_time_end = datetime.strptime(self.observatory.target_rise_time(self.date_range[1],
-    #                                                                             [t for t in self.targets if t.name == target['target_name']],
-    #                                                                             which='next', horizon=24 * u.deg).iso,
-    #                                           date_format)
-    #         shift_hours_observation = (rise_time_end.hour + rise_time_end.minute / 60 - rise_time_begin.hour -
-    #                                    rise_time_begin.minute / 60)
+        if self.priority[self.priority['target_name']==target['target_name']]['rise']:#[idx_target] == 'rise':
+            rise_time_begin = datetime.strptime(self.observatory.target_rise_time(self.date_range[0],
+                                                                                  [t for t in self.targets if t.name == target['target_name']],
+                                                                                  which='next', horizon=24 * u.deg).iso,
+                                                date_format)
+            rise_time_end = datetime.strptime(self.observatory.target_rise_time(self.date_range[1],
+                                                                                [t for t in self.targets if t.name == target['target_name']],
+                                                                                which='next', horizon=24 * u.deg).iso,
+                                              date_format)
+            shift_hours_observation = (rise_time_end.hour + rise_time_end.minute / 60 - rise_time_begin.hour -
+                                       rise_time_begin.minute / 60)
 
-    #     if self.priority[self.priority['target_name']==target['target_name']]['both']:#[idx_target] == 'both':
-    #         shift_hours_observation = 0
+        if self.priority[self.priority['target_name']==target['target_name']]['both']:#[idx_target] == 'both':
+            shift_hours_observation = 0
 
-    #     else:
-    #         shift_hours_observation = 0
+        else:
+            shift_hours_observation = 0
 
-    #     return shift_hours_observation  # hours
+        return shift_hours_observation  # hours
 
     def schedule_blocks(self, day):
         """

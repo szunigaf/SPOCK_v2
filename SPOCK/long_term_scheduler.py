@@ -2270,6 +2270,7 @@ class Schedules:
             # extract exposure time
             image_precision, binned_precision, components = result
             exposure_time = components["t [s]"]
+            self.target_table_spc['Filter_spc'][i]=filt_
 
 
         else:
@@ -2357,7 +2358,7 @@ class Schedules:
                 # extract exposure time
                 image_precision, binned_precision, components = result                
                 exposure_time = int(components["t [s]"])
-
+            self.target_table_spc['Filter_spc'][i]=filt_
         texp = exposure_time
 
 

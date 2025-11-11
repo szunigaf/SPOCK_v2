@@ -20,6 +20,7 @@ import functools
 from functools import reduce
 import gspread
 import mphot
+# path_mphot = mphot.__file__.replace('__init__.py', '')
 import numpy as np
 import os
 import os.path, time
@@ -34,7 +35,7 @@ import sys
 import time
 from tqdm.auto import tqdm
 from SPOCK import user_portal, pwd_portal, pwd_appcs, pwd_SNO_Reduc1, user_chart_studio, \
-    pwd_chart_studio, path_spock, target_list_from_stargate_path
+    pwd_chart_studio, path_spock, target_list_from_stargate_path, path_mphot
 import SPOCK.ETC as ETC
 
 iers.IERS_A_URL = 'https://datacenter.iers.org/data/9/finals2000A.all'  # 'http://maia.usno.navy.mil/ser7/finals2000A.all'#'ftp://cddis.gsfc.nasa.gov/pub/products/iers/finals2000A.all'
@@ -2224,8 +2225,6 @@ class Schedules:
         """
         if telescope is None:
             telescope = self.telescope
-
-        #mphot computation
         Teff_target = int(self.target_table_spc['teff'][i]) # #K
         gaia_id = int(self.target_table_spc['Gaia_ID'][i]) #gaia
         dist_target = float(self.target_table_spc['dist'][i]) #pc
@@ -2233,8 +2232,8 @@ class Schedules:
         if telescope == 'Callisto':
             filt_ = 'zYJ'  # filter to use for the calculation
             # files used to generate SR
-            efficiencyFile_SPIRIT = path_spock + '/Notebooks/mphot/resources/systems/speculoos_PIRT_1280SciCam_-60.csv'
-            filterFile_SPIRIT = path_spock + '/Notebooks/mphot/resources/filters/zYJ.csv'
+            efficiencyFile_SPIRIT = path_mphot + '/resources/systems/speculoos_PIRT_1280SciCam_-60.csv'
+            filterFile_SPIRIT = path_mphot + '/resources/filters/zYJ.csv'
             # name to refer to the generated file
             name_SPIRIT, system_response_SPIRIT = mphot.generate_system_response(
                 efficiencyFile_SPIRIT, filterFile_SPIRIT
@@ -2278,8 +2277,8 @@ class Schedules:
             filt_idx = 0
             filt_ = filters[filt_idx]
 
-            efficiencyFile_ANDOR = path_spock + '/Notebooks/mphot/resources/systems/speculoos_Andor_iKon-L-936_-60.csv'
-            filterFile_ANDOR = path_spock + '/Notebooks/mphot/resources/filters/I+z.csv'
+            efficiencyFile_ANDOR = path_mphot + '/resources/systems/speculoos_Andor_iKon-L-936_-60.csv'
+            filterFile_ANDOR = path_mphot + '/resources/filters/I+z.csv'
 
             # name to refer to the generated file
             name_ANDOR, system_response_ANDOR = mphot.generate_system_response(
@@ -2326,8 +2325,8 @@ class Schedules:
 
                 filt_idx += 1
                 filt_ = filters[filt_idx]
-                efficiencyFile_ANDOR = path_spock + '/Notebooks/mphot/resources/systems/speculoos_Andor_iKon-L-936_-60.csv'
-                filterFile_ANDOR = path_spock + '/Notebooks/mphot/resources/filters/'+str(filt_)+'.csv'
+                efficiencyFile_ANDOR = path_mphot + '/resources/systems/speculoos_Andor_iKon-L-936_-60.csv'
+                filterFile_ANDOR = path_mphot + '/resources/filters/'+str(filt_)+'.csv'
                 # name to refer to the generated file
                 name_ANDOR, system_response_ANDOR = mphot.generate_system_response(
                     efficiencyFile_ANDOR, filterFile_ANDOR

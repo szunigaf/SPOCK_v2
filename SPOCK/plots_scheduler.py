@@ -784,7 +784,6 @@ def phase_coverage_given_target(target, pmin, pmax, fix_expt=None, path_target_l
                                 "Gaia_ID": pd.concat([target_list_follow_up['Gaia_ID'],
                                                       target_list_speculoos["Gaia_ID"]])})
     all_targets.reset_index(inplace=True)
-
     idx_target_list = list(all_targets['Sp_ID']).index(target)
     if times is None:
         # data = getSPClcV2(target=target, ap='', pwvCorr=0)

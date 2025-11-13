@@ -1079,7 +1079,7 @@ class Schedules:
 
         if self.telescope == 'Callisto':
             #filters list
-            # possible filters = ['zYJ','J','H']
+            possible_filters = ['zYJ','SPC_J','SPC_H']
 
             #mphot computation
             efficiencyFile_SPIRIT = path_mphot + '/resources/systems/speculoos_PIRT_1280SciCam_-60.csv'

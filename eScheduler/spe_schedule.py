@@ -9,12 +9,14 @@ import numpy as np
 from astropy import units as u
 from astropy.time import Time
 from astropy.table import Table
+from colorama import Fore
 from datetime import datetime, timedelta
 
 from astroplan.utils import time_grid_from_range, stride_array
 from astroplan.constraints import AltitudeConstraint, AirmassConstraint
 from astroplan.target import get_skycoord
 
+import sys
 __all__ = ['ObservingBlock', 'TransitionBlock', 'Schedule', 'Slot', 'Scheduler',
            'SequentialScheduler', 'PriorityScheduler', 'Transitioner', 'Scorer','DateElsa','SimpleScheduler']
 
@@ -515,7 +517,7 @@ class Scheduler(object):
 
     @u.quantity_input(gap_time=u.second, time_resolution=u.second)
     def __init__(self, constraints, observer, transitioner=None,
-                 gap_time=5*u.min, time_resolution=20*u.second):
+                 gap_time=5*u.min, time_resolution=10*u.second):
         """
         Parameters
         ----------
@@ -1123,7 +1125,7 @@ class SPECULOOSScheduler(Scheduler):
                 #_is_scheduled = self.attempt_insert_block(b, new_start_time, start_time_idx)
                 b.duration_old=b.duration
 
-                while(b.duration>1*u.hour):
+                while(b.duration>0.16*u.hour):
                     if _is_scheduled:
                         break
                     b.duration=b.duration_old-0.01*u.hour
@@ -1135,7 +1137,7 @@ class SPECULOOSScheduler(Scheduler):
                     good = np.all(_strided_scores > 1e-5, axis=1)#np.where(_strided_scores[2] > 0)#np.where(_strided_scores > 0)[0]
                     sum_scores = np.zeros(len(_strided_scores))
                     sum_scores[good] = np.sum(_strided_scores[good], axis=1)
-                    if(b.duration<0.5*u.hour):
+                    if(b.duration<0.1*u.hour):
                         sum_scores[good]=0
                     for idx in np.argsort(sum_scores)[::-1]:
                         if sum_scores[idx] <= 1.0E-5:
@@ -1160,6 +1162,8 @@ class SPECULOOSScheduler(Scheduler):
 
             if not _is_scheduled:
                 unscheduled_blocks.append(b)
+                sys.exit(Fore.RED + 'ERROR: ' + Fore.BLACK
+                     + "Unable to schedule this block with SPECULOOS Scheduler, this happens when the block is too short (<10min)")
 
         empty_space=np.where(~self._get_filled_indices(times))
         if len(empty_space)*time_resolution.value>20:

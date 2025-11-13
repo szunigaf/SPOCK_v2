@@ -581,7 +581,7 @@ def airmass_altitude_plot_nolist(name_observatory, day, target, ra, dec):
 
     # Moon distance
     t_midnight = Time(sun_rise) - ((Time(sun_rise) - Time(sun_set)) / 2)
-    moon = get_moon(time=t_midnight, location=observatory.location)
+    moon = get_body("moon",time=t_midnight, location=observatory.location)
     distance_moon = round(float(moon.separation(SkyCoord(ra=ra, dec=dec, unit=(u.deg, u.deg))).value), 2)
 
     plot_styles = {'linestyle': '-', 'color': 'k'}
@@ -784,7 +784,6 @@ def phase_coverage_given_target(target, pmin, pmax, fix_expt=None, path_target_l
                                 "Gaia_ID": pd.concat([target_list_follow_up['Gaia_ID'],
                                                       target_list_speculoos["Gaia_ID"]])})
     all_targets.reset_index(inplace=True)
-
     idx_target_list = list(all_targets['Sp_ID']).index(target)
     if times is None:
         # data = getSPClcV2(target=target, ap='', pwvCorr=0)

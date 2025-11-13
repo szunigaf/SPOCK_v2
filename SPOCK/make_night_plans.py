@@ -290,17 +290,17 @@ def make_np(t_now, nb_jours, tel):
         sun_rise_san_pedro = san_pedro.sun_rise_time(t + 1, which='next')
 
         Path = Path_txt_files(telescope)
-        if telescope.find('Europa') is not -1:
+        if telescope.find('Europa') != -1:
             startup(t_now, name[0], sun_set.iso, date_start[0], Path, telescope)
-        if telescope.find('Ganymede') is not -1:
+        if telescope.find('Ganymede') != -1:
             startup(t_now, name[0], sun_set.iso, date_start[0], Path, telescope)
-        if telescope.find('Io') is not -1:
+        if telescope.find('Io') != -1:
             startup(t_now, name[0], sun_set.iso, date_start[0], Path, telescope)
-        if telescope.find('Callisto') is not -1:
+        if telescope.find('Callisto') != -1:
             startup(t_now, name[0], sun_set.iso, date_start[0], Path, telescope)
-        if telescope.find('Artemis') is not -1:
+        if telescope.find('Artemis') != -1:
             startup_artemis(t_now, name[0], sun_set_teide.iso, date_start[0], Path)
-        if telescope.find('Saint-Ex') is not -1:
+        if telescope.find('Saint-Ex') != -1:
             startup(t_now, name[0], sun_set_san_pedro.iso, date_start[0], Path, telescope)
         for i, nam in enumerate(name):
             if nam != 'TransitionBlock':
@@ -309,11 +309,11 @@ def make_np(t_now, nb_jours, tel):
                         first_target(t_now, nam, date_start[i], date_end[i], waitlimit, afinterval, autofocus, count,
                                      filt[i], texp[i], ra1[i], ra2[i], ra3[i], dec1[i], dec2[i], dec3[i], name[i + 1],
                                      Path, telescope)
-                    if i == 0 and telescope.find('Ganymede') is not -1:
+                    if i == 0 and telescope.find('Ganymede') != -1:
                         first_target(t_now, nam, date_start[i], date_end[i], waitlimit, afinterval, autofocus, count,
                                      filt[i], texp[i], ra1[i], ra2[i], ra3[i], dec1[i], dec2[i], dec3[i], name[i + 1],
                                      Path, telescope)
-                    if i == 0 and telescope.find('Artemis') is not -1:
+                    if i == 0 and telescope.find('Artemis') != -1:
                         filt[i] = filt[i].replace('\'', '')
                         if nam == 'haumea':
                             haumea(t_now, date_start[i], date_end[i], count, filt='Exo', exptime=240,
@@ -324,29 +324,29 @@ def make_np(t_now, nb_jours, tel):
                                          filt[i], texp[i], ra1[i], ra2[i], ra3[i], dec1[i], dec2[i], dec3[i],
                                          name[i + 1],
                                          Path, telescope='Artemis')
-                    if i == 0 and telescope.find('Saint-Ex') is not -1:
+                    if i == 0 and telescope.find('Saint-Ex') != -1:
                         first_target(t_now, nam, date_start[i], date_end[i], waitlimit, afinterval, autofocus, count,
                                      filt[i], texp[i], ra1[i], ra2[i], ra3[i], dec1[i], dec2[i], dec3[i], name[i + 1],
                                      Path, telescope='Saint-Ex')
 
-                    if i == (len(name) - 1) and telescope.find('Europa') is not -1:
+                    if i == (len(name) - 1) and telescope.find('Europa') != -1:
                         target(t_now, nam, date_start[i], date_end[i], waitlimit, afinterval, autofocus, count, filt[i],
                                texp[i], ra1[i], ra2[i], ra3[i], dec1[i], dec2[i], dec3[i], None, Path, telescope)
                         flatdawn(t_now, date_end[i], sun_rise.iso, Path, telescope)
-                    if i == (len(name) - 1) and telescope.find('Callisto') is not -1:
+                    if i == (len(name) - 1) and telescope.find('Callisto') != -1:
                         target(t_now, nam, date_start[i], date_end[i], waitlimit, afinterval, autofocus, count, filt[i],
                                texp[i], ra1[i], ra2[i], ra3[i], dec1[i], dec2[i], dec3[i], None, Path, telescope)
                         flatdawn(t_now, date_end[i], sun_rise.iso, Path, telescope)
-                    if i == (len(name) - 1) and telescope.find('Io') is not -1:
+                    if i == (len(name) - 1) and telescope.find('Io') != -1:
                         target(t_now, nam, date_start[i], date_end[i], waitlimit, afinterval, autofocus, count, filt[i],
                                texp[i], ra1[i], ra2[i], ra3[i], dec1[i], dec2[i], dec3[i], None, Path, telescope)
                         flatdawn(t_now, date_end[i], sun_rise.iso, Path, telescope)
-                    if i == (len(name) - 1) and telescope.find('Ganymede') is not -1:
+                    if i == (len(name) - 1) and telescope.find('Ganymede') != -1:
                         target(t_now, nam, date_start[i], date_end[i], waitlimit, afinterval, autofocus, count, filt[i],
                                texp[i], ra1[i], ra2[i], ra3[i], dec1[i], dec2[i], dec3[i], None, Path, telescope)
                         flatdawn(t_now, date_end[i], sun_rise.iso, Path, telescope)
 
-                    if i == (len(name) - 1) and telescope.find('Artemis') is not -1:
+                    if i == (len(name) - 1) and telescope.find('Artemis') != -1:
                         filt[i] = filt[i].replace('\'', '')
                         if nam == 'haumea':
                             haumea(t_now, date_start[i], date_end[i], count, filt='Exo', exptime=240,
@@ -357,7 +357,7 @@ def make_np(t_now, nb_jours, tel):
                                    Path, telescope='Artemis')
                         flatdawn_artemis(t_now, date_end[i], sun_rise_teide.iso, Path)
 
-                    if i == (len(name) - 1) and telescope.find('Saint-Ex') is not -1:
+                    if i == (len(name) - 1) and telescope.find('Saint-Ex') != -1:
                         target(t_now, nam, date_start[i], date_end[i], waitlimit, afinterval, autofocus, count, filt[i],
                                texp[i], ra1[i], ra2[i], ra3[i], dec1[i], dec2[i], dec3[i], None, Path,
                                telescope='Saint-Ex')
@@ -378,24 +378,24 @@ def make_np(t_now, nb_jours, tel):
                                telescope=telescope)
 
                 else:
-                    if i == (len(name) - 1) and telescope.find('Europa') is not -1:
+                    if i == (len(name) - 1) and telescope.find('Europa') != -1:
                         target(t_now, nam, date_start[i], date_end[i], waitlimit, afinterval, autofocus, count, filt[i],
                                texp[i], ra1[i], ra2[i], ra3[i], dec1[i], dec2[i], dec3[i], None, Path, telescope)
                         flatdawn(t_now, date_end[i], sun_rise.iso, Path, telescope)
-                    if i == (len(name) - 1) and telescope.find('Callisto') is not -1:
+                    if i == (len(name) - 1) and telescope.find('Callisto') != -1:
                         target(t_now, nam, date_start[i], date_end[i], waitlimit, afinterval, autofocus, count, filt[i],
                                texp[i], ra1[i], ra2[i], ra3[i], dec1[i], dec2[i], dec3[i], None, Path, telescope)
                         flatdawn(t_now, date_end[i], sun_rise.iso, Path, telescope)
-                    if i == (len(name) - 1) and telescope.find('Io') is not -1:
+                    if i == (len(name) - 1) and telescope.find('Io') != -1:
                         target(t_now, nam, date_start[i], date_end[i], waitlimit, afinterval, autofocus, count, filt[i],
                                texp[i], ra1[i], ra2[i], ra3[i], dec1[i], dec2[i], dec3[i], None, Path, telescope)
                         flatdawn(t_now, date_end[i], sun_rise.iso, Path, telescope)
-                    if i == (len(name) - 1) and telescope.find('Ganymede') is not -1:
+                    if i == (len(name) - 1) and telescope.find('Ganymede') != -1:
                         target(t_now, nam, date_start[i], date_end[i], waitlimit, afinterval, autofocus, count, filt[i],
                                texp[i], ra1[i], ra2[i], ra3[i], dec1[i], dec2[i], dec3[i], None, Path, telescope)
                         flatdawn(t_now, date_end[i], sun_rise.iso, Path, telescope)
 
-                    if i == (len(name) - 1) and telescope.find('Artemis') is not -1:
+                    if i == (len(name) - 1) and telescope.find('Artemis') != -1:
                         filt[i] = filt[i].replace('\'', '')
                         if nam == 'haumea':
                             haumea(t_now, date_start[i], date_end[i], count, filt='Exo', exptime=240,
@@ -406,7 +406,7 @@ def make_np(t_now, nb_jours, tel):
                                    None, Path, telescope=telescope)
                             flatdawn_artemis(t_now, date_end[i], sun_rise_teide.iso, Path)
 
-                    if i == (len(name) - 1) and telescope.find('Saint-Ex') is not -1:
+                    if i == (len(name) - 1) and telescope.find('Saint-Ex') != -1:
                         target(t_now, nam, date_start[i], date_end[i], waitlimit, afinterval, autofocus, count,
                                filt[i], texp[i], ra1[i], ra2[i], ra3[i], dec1[i], dec2[i], dec3[i],
                                None, Path, telescope=telescope)
@@ -425,29 +425,29 @@ def make_np(t_now, nb_jours, tel):
                                    filt[i], texp[i], ra1[i], ra2[i], ra3[i], dec1[i], dec2[i], dec3[i], name[i + 1],
                                    Path, telescope=telescope)
 
-        if telescope.find('Callisto') is not -1:
+        if telescope.find('Callisto') != -1:
             #filt.append("Clear")
             flatexo_calli(Path, t_now, filt)
-        if telescope.find('Ganymede') is not -1:
+        if telescope.find('Ganymede') != -1:
             flatexo_gany(Path, t_now, filt)
-        if telescope.find('Io') is not -1:
+        if telescope.find('Io') != -1:
             flatexo_io(Path, t_now, filt)
-        if telescope.find('Europa') is not -1:
+        if telescope.find('Europa') != -1:
             flatexo_euro(Path, t_now, filt)
-        if telescope.find('Artemis') is not -1:
+        if telescope.find('Artemis') != -1:
             flatexo_artemis_evening(Path, t_now, filt)
             flatexo_artemis_morning(Path, t_now, filt)
-        if telescope.find('Saint-Ex') is not -1:
+        if telescope.find('Saint-Ex') != -1:
             flatexo_saintex(Path, t_now, filt)
 
-        if telescope.find('Saint-Ex') is not -1:
+        if telescope.find('Saint-Ex') != -1:
             list_texps = [texp[i] for i in range(len(texp))]
             list_texps = list(dict.fromkeys(list_texps))
             biasdark(t_now, Path, telescope, texps=list_texps)
 
-        elif telescope.find('Callisto') is not -1 or telescope.find('Ganymede') is not -1 or (
-                telescope.find('Europa') is not -1) or (telescope.find('Io') is not -1) or \
-                (telescope.find('Artemis') is not -1):
+        elif telescope.find('Callisto') != -1 or telescope.find('Ganymede') != -1 or (
+                telescope.find('Europa') != -1) or (telescope.find('Io') != -1) or \
+                (telescope.find('Artemis') != -1):
             list_texps = [15., 30., 60., 120.] + [float(x) for x in texp]
             list_texps = np.unique(np.sort(list_texps))
             list_texps = [str(int(x)) for x in list_texps]
@@ -523,18 +523,18 @@ def make_astra_schedule_file(day, nb_days, telescope):
 
         ## Built Schedule for ASTRA
         # Open
-        open_row = [["Camera",	"camera_"+str(telescope).replace("-",""),	"open",	 "{}",
+        open_row = [[	"camera_"+str(telescope).replace("-",""),	"open",	 "{}",
                      (location.sun_set_time(t, which='next')+15*u.min).iso,
                      (location.sun_rise_time(t, which='next')-15*u.min).iso]]
-        df = pd.DataFrame(open_row, columns=["device_type",	"device_name",	"action_type",	"action_value",
+        df = pd.DataFrame(open_row, columns=["device_name",	"action_type",	"action_value",
                                              "start_time",	"end_time"])
 
-        # Dome
-        dome_row = pd.Series({"device_type": "Dome",	"device_name": "dome_"+str(telescope).replace("-",""),
-                             "action_type": "SlewToAzimuth",	"action_value": 230,
-                             "start_time": location.sun_set_time(t, which='next').iso,
-                              "end_time": location.sun_rise_time(t, which='next').iso})
-        df = pd.concat([df, pd.DataFrame([dome_row])], ignore_index=True)
+        # # Dome
+        # dome_row = pd.Series({	"device_name": "dome_"+str(telescope).replace("-",""),
+        #                      "action_type": "SlewToAzimuth",	"action_value": 230,
+        #                      "start_time": location.sun_set_time(t, which='next').iso,
+        #                       "end_time": location.sun_rise_time(t, which='next').iso})
+        # df = pd.concat([df, pd.DataFrame([dome_row])], ignore_index=True)
         # Flats
         def custom_sort(arr, custom_order):
             # Create a dictionary to store the index of each element in the custom order
@@ -560,7 +560,7 @@ def make_astra_schedule_file(day, nb_days, telescope):
             except ValueError:
                 (Fore.GREEN + 'INFO: ' + Fore.BLACK + " No I+z to discard for Callisto's Astra plans ")
                 pass
-        flats_row_evening = pd.Series({"device_type": "Camera",	"device_name": "camera_"+str(telescope).replace("-",""),
+        flats_row_evening = pd.Series({"device_name": "camera_"+str(telescope).replace("-",""),
                              "action_type": "flats",
                              "action_value": {"filter": filt_evening, 'n': [nb_flats]*len(filt_evening)},
                              "start_time": (location.sun_set_time(t, which='next')+15*u.min + 1*u.min).iso,
@@ -583,10 +583,14 @@ def make_astra_schedule_file(day, nb_days, telescope):
                 action_values_target = {'object': name[i], 'filter': filt[i], 'ra': coords.ra.value,
                                     'dec': coords.dec.value,
                                     'exptime': int(texp[i]), 'n':int(0)}
+            if 'ch_' in scheduler_table['target'][i] or 'Ch_' in scheduler_table['target'][i]:
+                action_values_target = {'object': name[i], 'filter': filt[i], 'ra': coords.ra.value, 'dec': coords.dec.value,
+                            'exptime': int(texp[i]), 'guiding': True, 'pointing': False, 
+                            'dir': f'C:/Users/speculoos/Documents/astra/images/Chilean/{t0.strftime('%Y%m%d')}'}
             else:
                 action_values_target = {'object': name[i], 'filter': filt[i], 'ra': coords.ra.value, 'dec': coords.dec.value,
                             'exptime': int(texp[i]), 'guiding': True, 'pointing': False}
-            target_row = pd.Series({"device_type": "Camera",	"device_name": "camera_"+str(telescope).replace("-",""),
+            target_row = pd.Series({"device_name": "camera_"+str(telescope).replace("-",""),
                              "action_type": "object",	"action_value": action_values_target,
                              "start_time": (Time(scheduler_table["start time (UTC)"][i] ) + 1*u.min).iso,
                                     "end_time": scheduler_table["end time (UTC)"][i]})
@@ -601,14 +605,14 @@ def make_astra_schedule_file(day, nb_days, telescope):
             except ValueError:
                 (Fore.GREEN + 'INFO: ' + Fore.BLACK + " No I+z to discard for Callisto's Astra plans ")
                 pass
-        flats_row_morning = pd.Series({"device_type": "Camera",	"device_name": "camera_"+str(telescope).replace("-",""),
+        flats_row_morning = pd.Series({"device_name": "camera_"+str(telescope).replace("-",""),
                              "action_type": "flats",
                                        "action_value": {"filter": filt_morning, 'n': [nb_flats]*len(filt_morning)},
                              "start_time": (Time(scheduler_table["end time (UTC)"][-1]) + 1*u.min).iso,
                                        "end_time": (location.sun_rise_time(t, which='next')-15*u.min).iso})
         df = pd.concat([df, pd.DataFrame([flats_row_morning])], ignore_index=True)
         # Close
-        close_row = pd.Series({"device_type": "Camera",	"device_name": "camera_"+str(telescope).replace("-",""),
+        close_row = pd.Series({	"device_name": "camera_"+str(telescope).replace("-",""),
                              "action_type": "close",	"action_value": {},
                              "start_time": (location.sun_rise_time(t, which='next')-15*u.min).iso,
                                "end_time": (location.sun_rise_time(t, which='next')+45*u.min).iso})
@@ -618,13 +622,13 @@ def make_astra_schedule_file(day, nb_days, telescope):
         texp += [0, 15, 30, 60, 120]
         texp = list(np.sort(np.unique(texp)))
         if (telescope == "Callisto"):
-            calibration_row = pd.DataFrame([{"device_type": "Camera",	"device_name": "camera_"+str(telescope).replace("-",""),
+            calibration_row = pd.DataFrame([{	"device_name": "camera_"+str(telescope).replace("-",""),
                                  "action_type": "calibration",	"action_value": {"exptime":texp, 'n': [10]*len(texp), 'filter':'Dark'},
                                  "start_time": (location.sun_rise_time(t, which='next')-10*u.min+ 1*u.min).iso,
                                          "end_time": (location.sun_rise_time(t, which='next')+45*u.min).iso}])
         else:
             calibration_row = pd.DataFrame([
-                {"device_type": "Camera", "device_name": "camera_" + str(telescope).replace("-", ""),
+                {"device_name": "camera_" + str(telescope).replace("-", ""),
                  "action_type": "calibration",
                  "action_value": {"exptime": texp, 'n': [10] * len(texp), 'filter': 'I+z'},
                  "start_time": (location.sun_rise_time(t, which='next') - 10 * u.min + 1 * u.min).iso,
@@ -633,5 +637,9 @@ def make_astra_schedule_file(day, nb_days, telescope):
         df = pd.concat([df, calibration_row], ignore_index=True)
         #df = df.append(calibration_row, ignore_index=True)
         #To .csv file
-        df.to_csv(path_spock + '/DATABASE/' + str(telescope) + "/Astra/" +
+        if telescope == "Callisto":
+            df.to_json(path_spock + '/DATABASE/' + str(telescope) + "/Astra/" +
+                  str(telescope) + '_' + str(t_now) + '.jsonl', orient="records", lines=True)
+        else:
+            df.to_csv(path_spock + '/DATABASE/' + str(telescope) + "/Astra/" +
                   str(telescope) + '_' + str(t_now) + '.csv', index=None)

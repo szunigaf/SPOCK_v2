@@ -1,7 +1,7 @@
 __all__ = ['long_term_scheduler','short_term_scheduler','make_night_plans','plots_scheduler',
            'txt_files','upload_night_plans','stats','SPECULOOSScheduler','pwd_appcs','pwd_HUB','user_portal',
            'pwd_portal','pwd_appcs','pwd_SNO_Reduc1','user_chart_studio','pwd_chart_studio','path_spock',
-           'path_credential_json','login_stargate','pwd_stargate']
+           'path_credential_json','login_stargate','pwd_stargate', 'path_mphot']
 
 __version__ = "2.2.0"
 
@@ -67,6 +67,7 @@ def _get_files():
             path_credential_json = Inputs['credential_json'][0]
             login_stargate = Inputs['login_stargate'][0]
             pwd_stargate = Inputs['pwd_stargate'][0]
+            path_mphot = Inputs['path_mphot'][0]
 
         # ************************ Create database ************************
 
@@ -117,7 +118,7 @@ def _get_files():
         #     open(path_spock + '/survey_hours/' + file, 'wb').write(resp.content)
 
         return pwd_appcs, pwd_HUB, user_portal, pwd_portal, pwd_appcs, pwd_SNO_Reduc1, user_chart_studio,\
-               pwd_chart_studio, path_spock, path_credential_json, login_stargate, pwd_stargate
+               pwd_chart_studio, path_spock, path_credential_json, login_stargate, pwd_stargate, path_mphot
 
         # **********************************************************************************************************
     else:
@@ -225,7 +226,7 @@ def change_fmt_stargate_TL(file_name):
 
     return path_spock + '/target_lists/stargate/' + 'TL_spock_' + file_name
 
-pwd_appcs,pwd_HUB, user_portal, pwd_portal, pwd_appcs, pwd_SNO_Reduc1, user_chart_studio, pwd_chart_studio, path_spock, path_credential_json, login_stargate, pwd_stargate = _get_files()
+pwd_appcs,pwd_HUB, user_portal, pwd_portal, pwd_appcs, pwd_SNO_Reduc1, user_chart_studio, pwd_chart_studio, path_spock, path_credential_json, login_stargate, pwd_stargate, path_mphot = _get_files()
 
 today = date.today() - timedelta(days=1)
 today = today.strftime("%Y-%m-%d")

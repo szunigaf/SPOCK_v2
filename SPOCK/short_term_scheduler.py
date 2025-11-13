@@ -140,10 +140,11 @@ class Schedules:
         self.target_list_special = None
         self.targets = None
         self.target_table_spc = []
+        self.start_night = None
+        self.end_night = None
 
     @property
     def start_of_observation(self):
-        dt_1day = Time('2018-01-02 00:00:00', scale='tcg') - Time('2018-01-01 00:00:00', scale='tcg')  # 1 day
         start_between_civil_nautical = Time((Time(
             self.observatory.twilight_evening_nautical(self.day_of_night, which='next')).value +
                                              Time(self.observatory.twilight_evening_civil(
@@ -152,7 +153,6 @@ class Schedules:
 
     @property
     def end_of_observation(self):
-        dt_1day = Time('2018-01-02 00:00:00', scale='tcg') - Time('2018-01-01 00:00:00', scale='tcg')  # 1 day
         end_between_nautical_civil = Time((Time(
             self.observatory.twilight_morning_nautical(self.day_of_night + 1, which='nearest')).value +
                                            Time(self.observatory.twilight_morning_civil(
@@ -166,6 +166,7 @@ class Schedules:
         ----------
         filename_list_special: name of the file with special targets (stars not in SPECULOOS survey) to observe
         filename_follow_up: name of the file with follow up candidates targets (planets with ephemeris)
+        set start and end of night 
 
         Returns
         -------
@@ -366,6 +367,7 @@ class Schedules:
         start = self.start_end_range[0]
         end = self.start_end_range[1]
 
+
         if (start >= self.end_of_observation) or \
                 (end <= self.start_of_observation):
             sys.exit(Fore.YELLOW + 'WARNING: ' + Fore.BLACK + 'Start time (or End time) is not on the same day.')
@@ -375,6 +377,21 @@ class Schedules:
                                       MoonSeparationConstraint(min=self.moon_constraint * u.deg),
                                       TimeConstraint(start, end)]
         idx_to_insert_target = int(np.where((self.target_table_spc['Sp_ID'] == input_name))[0])
+
+        rise_target = self.observatory.target_rise_time(self.start_of_observation, self.targets[idx_to_insert_target],  which='next', 
+                                                        horizon= self.altitude_constraint * u.deg)
+        set_target = self.observatory.target_set_time(self.start_of_observation, self.targets[idx_to_insert_target], which='next', 
+                                                        horizon= self.altitude_constraint * u.deg)
+
+        if (rise_target > start) or (set_target < end):   
+            sys.exit(Fore.RED + 'ERROR: ' + Fore.BLACK
+                     + " Observation impossible because the target is not above the altitude constraint at some point during the given time range. ")
+            
+        if (start < self.start_of_observation) or (end > self.end_of_observation):   
+            sys.exit(Fore.RED + 'ERROR: ' + Fore.BLACK
+                     + " Observation impossible because the given range is not fully within the night time. ")
+
+
         if self.target_table_spc['texp_spc'][idx_to_insert_target] == 0 \
                 or self.target_table_spc['texp_spc'][idx_to_insert_target] == "00":
             self.target_table_spc['texp_spc'][idx_to_insert_target], \

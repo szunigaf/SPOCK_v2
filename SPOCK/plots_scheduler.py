@@ -749,14 +749,14 @@ def get_all_LCS(gaia_id_target, fix_expt=None):
                 # counts = collections.Counter(exposures)
                 if fix_expt is None:
                     times.append(np.array(data['environment']['BJD-OBS']))
-                    diff_fluxes.append(data["stars"][str(data['best_ap'])][0]['DIFF_FLUX'])
-                    exposures.append(data['environment']['EXPOSURE'])
+                    diff_fluxes.append(np.array(data["stars"][str(data['best_ap'])][0]['DIFF_FLUX']))
+                    exposures.append(np.array(data['environment']['EXPOSURE']))
                     dates.append(data['date'])
                 else:
                     if data['environment']['EXPOSURE'] == fix_expt:
                         times.append(np.array(data['environment']['BJD-OBS']))
-                        diff_fluxes.append(data["stars"][str(data['best_ap'])][0]['DIFF_FLUX'])
-                        exposures.append(data['environment']['EXPOSURE'])
+                        diff_fluxes.append(np.array(data["stars"][str(data['best_ap'])][0]['DIFF_FLUX']))
+                        exposures.append(np.array(data['environment']['EXPOSURE']))
                         dates.append(data['date'])
                         print(exposures)
             except json.decoder.JSONDecodeError:

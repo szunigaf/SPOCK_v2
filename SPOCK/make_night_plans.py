@@ -585,11 +585,11 @@ def make_astra_schedule_file(day, nb_days, telescope):
                                     'exptime': int(texp[i]), 'n':int(0)}
             if 'ch_' in scheduler_table['target'][i] or 'Ch_' in scheduler_table['target'][i]:
                 action_values_target = {'object': name[i], 'filter': filt[i], 'ra': coords.ra.value, 'dec': coords.dec.value,
-                            'exptime': int(texp[i]), 'guiding': True, 'pointing': False, 
-                            'dir': f'C:/Users/speculoos/Documents/astra/images/Chilean/{t0.strftime('%Y%m%d')}'}
+                            'exptime': int(texp[i]), 'guiding': True, 'pointing': True, 
+                            'dir': f'C:/Users/speculoos/Documents/astra/images/Chilean/{str(t_now)}'}
             else:
                 action_values_target = {'object': name[i], 'filter': filt[i], 'ra': coords.ra.value, 'dec': coords.dec.value,
-                            'exptime': int(texp[i]), 'guiding': True, 'pointing': False}
+                            'exptime': int(texp[i]), 'guiding': True, 'pointing': True}
             target_row = pd.Series({"device_name": "camera_"+str(telescope).replace("-",""),
                              "action_type": "object",	"action_value": action_values_target,
                              "start_time": (Time(scheduler_table["start time (UTC)"][i] ) + 1*u.min).iso,
@@ -637,7 +637,7 @@ def make_astra_schedule_file(day, nb_days, telescope):
         df = pd.concat([df, calibration_row], ignore_index=True)
         #df = df.append(calibration_row, ignore_index=True)
         #To .csv file
-        if telescope == "Callisto":
+        if (telescope == "Callisto") or (telescope=="Ganymede"):
             df.to_json(path_spock + '/DATABASE/' + str(telescope) + "/Astra/" +
                   str(telescope) + '_' + str(t_now) + '.jsonl', orient="records", lines=True)
         else:

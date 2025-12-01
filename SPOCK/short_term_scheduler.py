@@ -1063,6 +1063,7 @@ class Schedules:
         if self.telescope == 'Callisto':
             #filters list
             # possible filters = ['zYJ','J','H']
+            filt_ = target_list['Filter_spc'][i].values[0]
 
             #mphot computation
             efficiencyFile_SPIRIT = path_mphot + '/resources/systems/speculoos_PIRT_1280SciCam_-60.csv'
@@ -1160,8 +1161,8 @@ class Schedules:
 
                 filt_idx += 1
                 filt_ = filters[filt_idx]
-                efficiencyFile_ANDOR = path_spock + '/resources/systems/speculoos_Andor_iKon-L-936_-60.csv'
-                filterFile_ANDOR = path_spock + '/resources/filters/'+str(filt_)+'.csv'
+                efficiencyFile_ANDOR = path_mphot + '/resources/systems/speculoos_Andor_iKon-L-936_-60.csv'
+                filterFile_ANDOR = path_mphot+ '/resources/filters/'+str(filt_)+'.csv'
                 # name to refer to the generated file
                 name_ANDOR, system_response_ANDOR = mphot.generate_system_response(
                     efficiencyFile_ANDOR, filterFile_ANDOR

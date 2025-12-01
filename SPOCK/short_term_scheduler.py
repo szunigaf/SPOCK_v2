@@ -378,14 +378,15 @@ class Schedules:
                                       TimeConstraint(start, end)]
         idx_to_insert_target = int(np.where((self.target_table_spc['Sp_ID'] == input_name))[0])
 
-        rise_target = self.observatory.target_rise_time(self.start_of_observation, self.targets[idx_to_insert_target],  which='next', 
+        ## WARNING with Next and Nearest
+        rise_target = self.observatory.target_rise_time(self.start_of_observation, self.targets[idx_to_insert_target],  which='nearest', 
                                                         horizon= self.altitude_constraint * u.deg)
         set_target = self.observatory.target_set_time(self.start_of_observation, self.targets[idx_to_insert_target], which='next', 
                                                         horizon= self.altitude_constraint * u.deg)
 
         if (rise_target > start) or (set_target < end):   
             sys.exit(Fore.RED + 'ERROR: ' + Fore.BLACK
-                     + " Observation impossible because the target is not above the altitude constraint at some point during the given time range. ")
+                     + " Observation impossible because the target is not below the altitude constraint at some point during the given time range. If this is not the case this might be due to the setup of the \"which\" argument in the function target_rise_time(). Ask Elsa.")
             
         if (start < self.start_of_observation) or (end > self.end_of_observation):   
             sys.exit(Fore.RED + 'ERROR: ' + Fore.BLACK
@@ -1328,7 +1329,7 @@ def read_night_block(telescope, day):
             str(telescope) + '_' + str(day_fmt) + '.txt',
             format='ascii')
     else:
-        nightb_url = "https://speculoos.withastra.io/SPECULOOS/Observations/" + telescope + '/schedule/Archive_night_blocks/night_blocks_' + \
+        nightb_url = "https://www.mrao.cam.ac.uk/SPECULOOS/Observations/" + telescope + '/schedule/Archive_night_blocks/night_blocks_' + \
                      telescope + '_' + day_fmt + '.txt'
         nightb = requests.get(nightb_url, auth=(user_portal, pwd_portal))
 

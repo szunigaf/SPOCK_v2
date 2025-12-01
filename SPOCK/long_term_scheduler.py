@@ -259,7 +259,7 @@ def sso_planned_targets(date_is, telescope):
                   telescopes[i] + ' on the ' + str(date_is) + ', looking online to check which targets are observed')
     #online
     for i in range(len(telescopes)):
-        nightb_url = "https://speculoos.withastra.io/SPECULOOS/Observations/" + telescope + '/schedule/Archive_night_blocks/night_blocks_' + \
+        nightb_url = "https://www.mrao.cam.ac.uk/SPECULOOS/Observations/" + telescope + '/schedule/Archive_night_blocks/night_blocks_' + \
                      telescope + '_' + str(date_is) + '.txt'
         nightb = requests.get(nightb_url, auth=(user_portal, pwd_portal))
 
@@ -311,7 +311,7 @@ def sno_planned_targets(date_is):
             
     #online
     for i in range(len(telescopes)):
-        nightb_url = "https://speculoos.withastra.io/SPECULOOS/Observations/" + telescopes[i] + '/schedule/Archive_night_blocks/night_blocks_' + telescopes[i] + '_' + str(date_is) + '.txt'
+        nightb_url = "https://www.mrao.cam.ac.uk/SPECULOOS/Observations/" + telescopes[i] + '/schedule/Archive_night_blocks/night_blocks_' + telescopes[i] + '_' + str(date_is) + '.txt'
         nightb = requests.get(nightb_url, auth=(user_portal, pwd_portal))
 
         if nightb.status_code == 404:
@@ -361,7 +361,7 @@ def saintex_planned_targets(date_is):
             
     #online
     for i in range(len(telescopes)):
-        nightb_url = "https://speculoos.withastra.io/SPECULOOS/Observations/" + telescopes[i] + '/schedule/Archive_night_blocks/night_blocks_' + telescopes[i] + '_' + str(date_is) + '.txt'
+        nightb_url = "https://www.mrao.cam.ac.uk/SPECULOOS/Observations/" + telescopes[i] + '/schedule/Archive_night_blocks/night_blocks_' + telescopes[i] + '_' + str(date_is) + '.txt'
         nightb = requests.get(nightb_url, auth=(user_portal, pwd_portal))
 
         if nightb.status_code == 404:
@@ -2045,7 +2045,7 @@ class Schedules:
                     # print(Fore.GREEN + 'INFO: ' + Fore.BLACK + ' No plans in your local folders for ' +
                     #     tel + ' on the ' + d.datetime.strftime("%Y-%m-%d") + " looking online to update hours")
                     # online
-                    nightb_url = "https://speculoos.withastra.io/SPECULOOS/Observations/" + tel + \
+                    nightb_url = "https://www.mrao.cam.ac.uk/SPECULOOS/Observations/" + tel + \
                             '/schedule/Archive_night_blocks/night_blocks_' + \
                             tel + '_' + d.datetime.strftime("%Y-%m-%d") + '.txt'
                     nightb = requests.get(nightb_url, auth=(user_portal, pwd_portal))

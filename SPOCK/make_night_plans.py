@@ -551,7 +551,7 @@ def make_astra_schedule_file(day, nb_days, telescope):
         my_custom_order_evening = ["B", "z\'", "V", "r\'", "i\'", "g\'", "I+z", "Exo", "zYJ", "Clear"]
         filt_evening = custom_sort(my_array, my_custom_order_evening)
         if len(filt_evening) == 1:
-            nb_flats = 20
+            nb_flats = 30
         else:
             nb_flats = 15
         if (telescope == "Callisto"):

@@ -277,17 +277,17 @@ def make_np(t_now, nb_jours, tel):
                                                2635.0000000009704 * u.m)
         paranal = Observer(location=location, name="paranal", timezone="UTC")
         t = Time(t_now)
-        sun_set = paranal.sun_set_time(t, which='next')
-        sun_rise = paranal.sun_rise_time(t, which='next')
+        sun_set = paranal.sun_set_time(t, which='next',horizon=-1*u.deg)
+        sun_rise = paranal.sun_rise_time(t, which='next', horizon=-1*u.deg)
         location_SNO = EarthLocation.from_geodetic(-16.50583131 * u.deg, 28.2999988 * u.deg, 2390 * u.m)
         teide = Observer(location=location_SNO, name="SNO", timezone="UTC")
-        sun_set_teide = teide.sun_set_time(t, which='next')
-        sun_rise_teide = teide.sun_rise_time(t + 1, which='next')
+        sun_set_teide = teide.sun_set_time(t, which='next', horizon=-1*u.deg)
+        sun_rise_teide = teide.sun_rise_time(t + 1, which='next', horizon=-1*u.deg)
         location_saintex = EarthLocation.from_geodetic(-115.48694444444445 * u.deg, 31.029166666666665 * u.deg,
                                                        2829.9999999997976 * u.m)
         san_pedro = Observer(location=location_saintex, name="saintex", timezone="UTC")
-        sun_set_san_pedro = san_pedro.sun_set_time(t + 1, which='next')
-        sun_rise_san_pedro = san_pedro.sun_rise_time(t + 1, which='next')
+        sun_set_san_pedro = san_pedro.sun_set_time(t + 1, which='next', horizon=-1*u.deg)
+        sun_rise_san_pedro = san_pedro.sun_rise_time(t + 1, which='next', horizon=-1*u.deg)
 
         Path = Path_txt_files(telescope)
         if telescope.find('Europa') != -1:
@@ -524,8 +524,8 @@ def make_astra_schedule_file(day, nb_days, telescope):
         ## Built Schedule for ASTRA
         # Open
         open_row = [[	"camera_"+str(telescope).replace("-",""),	"open",	 "{}",
-                     (location.sun_set_time(t, which='next')+15*u.min).iso,
-                     (location.sun_rise_time(t, which='next')-15*u.min).iso]]
+                     (location.sun_set_time(t, which='next', horizon=-1*u.deg)+15*u.min).iso,
+                     (location.sun_rise_time(t, which='next',horizon=-1*u.deg)-15*u.min).iso]]
         df = pd.DataFrame(open_row, columns=["device_name",	"action_type",	"action_value",
                                              "start_time",	"end_time"])
 
@@ -563,7 +563,7 @@ def make_astra_schedule_file(day, nb_days, telescope):
         flats_row_evening = pd.Series({"device_name": "camera_"+str(telescope).replace("-",""),
                              "action_type": "flats",
                              "action_value": {"filter": filt_evening, 'n': [nb_flats]*len(filt_evening)},
-                             "start_time": (location.sun_set_time(t, which='next')+15*u.min + 1*u.min).iso,
+                             "start_time": (location.sun_set_time(t, which='next', horizon=-1*u.deg)+15*u.min + 1*u.min).iso,
                                        "end_time": scheduler_table["start time (UTC)"][0]})
         df = pd.concat([df, pd.DataFrame([flats_row_evening])], ignore_index=True)
         #Targets
@@ -583,7 +583,7 @@ def make_astra_schedule_file(day, nb_days, telescope):
                 action_values_target = {'object': name[i], 'filter': filt[i], 'ra': coords.ra.value,
                                     'dec': coords.dec.value,
                                     'exptime': int(texp[i]), 'n':int(0)}
-            if 'ch_' in scheduler_table['target'][i] or 'Ch_' in scheduler_table['target'][i]:
+            elif 'ch_' in scheduler_table['target'][i] or 'Ch_' in scheduler_table['target'][i]:
                 action_values_target = {'object': name[i], 'filter': filt[i], 'ra': coords.ra.value, 'dec': coords.dec.value,
                             'exptime': int(texp[i]), 'guiding': True, 'pointing': True, 
                             'dir': f'C:/Users/speculoos/Documents/astra/images/Chilean/{str(t_now)}'}
@@ -609,13 +609,13 @@ def make_astra_schedule_file(day, nb_days, telescope):
                              "action_type": "flats",
                                        "action_value": {"filter": filt_morning, 'n': [nb_flats]*len(filt_morning)},
                              "start_time": (Time(scheduler_table["end time (UTC)"][-1]) + 1*u.min).iso,
-                                       "end_time": (location.sun_rise_time(t, which='next')-15*u.min).iso})
+                                       "end_time": (location.sun_rise_time(t, which='next',horizon=-1*u.deg)-15*u.min).iso})
         df = pd.concat([df, pd.DataFrame([flats_row_morning])], ignore_index=True)
         # Close
         close_row = pd.Series({	"device_name": "camera_"+str(telescope).replace("-",""),
                              "action_type": "close",	"action_value": {},
-                             "start_time": (location.sun_rise_time(t, which='next')-15*u.min).iso,
-                               "end_time": (location.sun_rise_time(t, which='next')+45*u.min).iso})
+                             "start_time": (location.sun_rise_time(t, which='next', horizon=-1*u.deg)-15*u.min).iso,
+                               "end_time": (location.sun_rise_time(t, which='next', horizon=-1*u.deg)+45*u.min).iso})
         df = pd.concat([df, pd.DataFrame([close_row])], ignore_index=True)
         # Calibration
         texp = [int(x) for x in texp]
@@ -624,15 +624,15 @@ def make_astra_schedule_file(day, nb_days, telescope):
         if (telescope == "Callisto"):
             calibration_row = pd.DataFrame([{	"device_name": "camera_"+str(telescope).replace("-",""),
                                  "action_type": "calibration",	"action_value": {"exptime":texp, 'n': [10]*len(texp), 'filter':'Dark'},
-                                 "start_time": (location.sun_rise_time(t, which='next')-10*u.min+ 1*u.min).iso,
-                                         "end_time": (location.sun_rise_time(t, which='next')+45*u.min).iso}])
+                                 "start_time": (location.sun_rise_time(t, which='next', horizon=-1*u.deg)-10*u.min+ 1*u.min).iso,
+                                         "end_time": (location.sun_rise_time(t, which='next', horizon=-1*u.deg)+45*u.min).iso}])
         else:
             calibration_row = pd.DataFrame([
                 {"device_name": "camera_" + str(telescope).replace("-", ""),
                  "action_type": "calibration",
                  "action_value": {"exptime": texp, 'n': [10] * len(texp), 'filter': 'I+z'},
-                 "start_time": (location.sun_rise_time(t, which='next') - 10 * u.min + 1 * u.min).iso,
-                 "end_time": (location.sun_rise_time(t, which='next') + 45 * u.min).iso}])
+                 "start_time": (location.sun_rise_time(t, which='next', horizon=-1*u.deg) - 10 * u.min + 1 * u.min).iso,
+                 "end_time": (location.sun_rise_time(t, which='next', horizon=-1*u.deg) + 45 * u.min).iso}])
         # Add calibration row to the dataframe
         df = pd.concat([df, calibration_row], ignore_index=True)
         #df = df.append(calibration_row, ignore_index=True)

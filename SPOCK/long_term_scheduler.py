@@ -1572,9 +1572,9 @@ class Schedules:
 
     def table_priority_prio(self, day):
 
-        self.priority =  pd.DataFrame(columns=['priority', 'target_name', 'set', 'rise', 'both', 'moon', 'program',
-                                               'SNR_ANDOR', 'SNR_SPIRIT', 'boost', 'to_do', 'started', 'completed','SPIRIT_observable'
-                           ])
+        # self.priority =  pd.DataFrame(columns=['priority', 'target_name', 'set', 'rise', 'both', 'moon', 'program',
+        #                                        'SNR_ANDOR', 'SNR_SPIRIT', 'boost', 'to_do', 'started', 'completed','SPIRIT_observable'
+        #                    ])
         try:
             self.init_priority_table(self.day)  # initialise priority table
         except ValueError:
@@ -1602,73 +1602,104 @@ class Schedules:
         horizon_for_set_and_rise = -12 * u.degree # degrees
 
         if self.telescope == 'Saint-Ex':
-            delta_midnight_start = np.linspace(0, self.observatory.sun_rise_time(day, which='next',
-                                                                                    horizon=-8.19 * u.degree).jd -
-                                                self.observatory.sun_set_time(day, which='nearest',
-                                                                                horizon=-8.19 * u.degree).jd,
-                                                nb_reso_grid) * u.day  # Delta at the first day of schedule
-            frame_start = AltAz(obstime=self.start_night + delta_midnight_start,
-                                location=self.observatory.location)
+            # delta_midnight_start = np.linspace(0, self.observatory.sun_rise_time(day, which='next',
+            #                                                                         horizon=-8.19 * u.degree).jd -
+            #                                     self.observatory.sun_set_time(day, which='next',
+            #                                                                     horizon=-8.19 * u.degree).jd,
+            #                                     nb_reso_grid) * u.day  # Delta at the first day of schedule
+            # frame_start = AltAz(obstime=self.start_night + delta_midnight_start,
+            #                     location=self.observatory.location)
 
-            delta_midnight_end = np.linspace(0, self.observatory.sun_rise_time(day + self.date_range_in_days,
-                                                                                which='next',
-                                                                                horizon=-8.19 * u.degree).jd
-                                                - self.observatory.sun_set_time(day + self.date_range_in_days,
-                                                                                which='nearest',
-                                                                                horizon=-8.19 * u.degree).jd,
-                                                nb_reso_grid) * u.day  # Delta at the first day of schedule
-            frame_end = AltAz(obstime=self.end_night + delta_midnight_end,
-                                location=self.observatory.location)
+            # delta_midnight_end = np.linspace(0, self.observatory.sun_rise_time(day + self.date_range_in_days,
+            #                                                                     which='next',
+            #                                                                     horizon=-8.19 * u.degree).jd
+            #                                     - self.observatory.sun_set_time(day + self.date_range_in_days,
+            #                                                                     which='next',
+            #                                                                     horizon=-8.19 * u.degree).jd,
+            #                                     nb_reso_grid) * u.day  # Delta at the first day of schedule
+            # frame_end = AltAz(obstime=self.end_night + delta_midnight_end,
+            #                     location=self.observatory.location)
+            sunset_time = self.observatory.sun_set_time(day, which='next', horizon=-8.19 * u.degree)
+            sunrise_time = self.observatory.sun_rise_time(day, which='next', horizon=-8.19 * u.degree)
+
+            delta_midnight = np.linspace(0, sunrise_time.jd - sunset_time.jd, nb_reso_grid) * u.day
+            frame = AltAz(obstime=sunset_time + delta_midnight, location=self.observatory.location)
 
         else:
-            start_night_start = Time(self.observatory.sun_set_time(day, which='next',
-                                                                        horizon=horizon_for_set_and_rise).iso)
-            delta_midnight_start = np.linspace(0, self.observatory.sun_rise_time(day, which='next',
-                                                                                        horizon=horizon_for_set_and_rise).jd -
-                                                    self.observatory.sun_set_time(day, which='nearest',
-                                                                                    horizon=horizon_for_set_and_rise).jd,
-                                                    nb_reso_grid) * u.day  # Delta at the first day of schedule
-            frame_start = AltAz(obstime=start_night_start + delta_midnight_start,
-                                location=self.observatory.location)
+            sunset_time = self.observatory.sun_set_time(day, which='next', horizon=horizon_for_set_and_rise)
+            sunrise_time = self.observatory.sun_rise_time(day, which='next', horizon=horizon_for_set_and_rise)
 
-            start_night_end = Time(self.observatory.sun_set_time(day + self.date_range_in_days,
-                                                                        which='nearest', horizon=horizon_for_set_and_rise).iso)
-            delta_midnight_end = np.linspace(0, self.observatory.sun_rise_time(day + self.date_range_in_days,
-                                                                                    which='next',
-                                                                                    horizon=horizon_for_set_and_rise).jd
-                                                    - self.observatory.sun_set_time(day + self.date_range_in_days,
-                                                                                    which='nearest',
-                                                                                    horizon=horizon_for_set_and_rise).jd,
-                                                    nb_reso_grid) * u.day  # Delta at the first day of schedule
-            frame_end = AltAz(obstime=start_night_end + delta_midnight_end, location=self.observatory.location)
+            delta_midnight = np.linspace(0, sunrise_time.jd - sunset_time.jd, nb_reso_grid) * u.day
+            frame = AltAz(obstime=sunset_time + delta_midnight, location=self.observatory.location)
+        #     start_night_start = Time(self.observatory.sun_set_time(day, which='next',
+        #                                                                 horizon=horizon_for_set_and_rise).iso)
+        #     delta_midnight_start = np.linspace(0, self.observatory.sun_rise_time(day, which='next',
+        #                                                                                 horizon=horizon_for_set_and_rise).jd -
+        #                                             self.observatory.sun_set_time(day, which='nearest',
+        #                                                                             horizon=horizon_for_set_and_rise).jd,
+        #                                             nb_reso_grid) * u.day  # Delta at the first day of schedule
+        #     frame_start = AltAz(obstime=start_night_start + delta_midnight_start,
+        #                         location=self.observatory.location)
 
-        target_alt = [[target.coord.transform_to(frame_start).alt,
-                        target.coord.transform_to(frame_end).alt] for target in self.targets]  # This line takes time
-        target_alt_start = np.asarray(target_alt)[:, 0, :]
-        target_alt_end = np.asarray(target_alt)[:, 1, :]
+        #     start_night_end = Time(self.observatory.sun_set_time(day + self.date_range_in_days,
+        #                                                                 which='nearest', horizon=horizon_for_set_and_rise).iso)
+        #     delta_midnight_end = np.linspace(0, self.observatory.sun_rise_time(day + self.date_range_in_days,
+        #                                                                             which='next',
+        #                                                                             horizon=horizon_for_set_and_rise).jd
+        #                                             - self.observatory.sun_set_time(day + self.date_range_in_days,
+        #                                                                             which='nearest',
+        #                                                                             horizon=horizon_for_set_and_rise).jd,
+        #                                             nb_reso_grid) * u.day  # Delta at the first day of schedule
+        #     frame_end = AltAz(obstime=start_night_end + delta_midnight_end, location=self.observatory.location)
+
+        # target_alt = [[target.coord.transform_to(frame_start).alt,
+        #                 target.coord.transform_to(frame_end).alt] for target in self.targets]  # This line takes time
+        # target_alt_start = np.asarray(target_alt)[:, 0, :]
+        # target_alt_end = np.asarray(target_alt)[:, 1, :]
         
-        alt_set_start = list(map(first_elem_list, target_alt_start[:]))
-        alt_rise_start = list(map(last_elem_list, target_alt_start[:]))
-        alt_set_end = list(map(first_elem_list, target_alt_end[:]))
-        alt_rise_end = list(map(last_elem_list, target_alt_end[:]))
+        # alt_set_start = list(map(first_elem_list, target_alt_start[:]))
+        # alt_rise_start = list(map(last_elem_list, target_alt_start[:]))
+        # alt_set_end = list(map(first_elem_list, target_alt_end[:]))
+        # alt_rise_end = list(map(last_elem_list, target_alt_end[:]))
+        target_alt = [target.coord.transform_to(frame).alt for target in self.targets]
+        target_alt = np.asarray(target_alt)
 
+        alt_set = list(map(first_elem_list, target_alt[:]))  # Altitude at sunset
+        alt_rise = list(map(last_elem_list, target_alt[:]))  # Altitude at sunrise
 
-        df_altitudes = pd.DataFrame({ 'alt set start': alt_set_start,
-                           'alt rise start': alt_rise_start, 'alt set end': alt_set_end,
-                           'alt rise end': alt_rise_end, 
-                           'Sp_ID': self.target_table_spc['Sp_ID']})
+        df_altitudes = pd.DataFrame({
+        'alt set': alt_set,
+        'alt rise': alt_rise, 
+        'Sp_ID': self.target_table_spc['Sp_ID']
+            })
+        # df_altitudes = pd.DataFrame({ 'alt set start': alt_set_start,
+        #                    'alt rise start': alt_rise_start, 'alt set end': alt_set_end,
+        #                    'alt rise end': alt_rise_end, 
+        #                    'Sp_ID': self.target_table_spc['Sp_ID']})
             
 
-        set_targets_index = (df_altitudes['alt set start'] > self.Altitude_constraint) & \
-                            (df_altitudes['alt set end'] > self.Altitude_constraint)
+        # set_targets_index = (df_altitudes['alt set start'] > self.Altitude_constraint) & \
+        #                     (df_altitudes['alt set end'] > self.Altitude_constraint)
+        # self.priority['set'][set_targets_index] = True
+
+        # rise_targets_index = (df_altitudes['alt rise start'] > self.Altitude_constraint) \
+        #                      & (df_altitudes['alt rise end'] > self.Altitude_constraint)
+        # self.priority['rise'][rise_targets_index] = True
+
+        # both_targets_index = (df_altitudes['alt set start'] > self.Altitude_constraint) & \
+        #                     (df_altitudes['alt rise start'] > self.Altitude_constraint) 
+        # self.priority['both'][both_targets_index] = True
+        # Setting targets: observable at the start of the night (sunset)
+        set_targets_index = df_altitudes['alt set'] > self.Altitude_constraint
         self.priority['set'][set_targets_index] = True
 
-        rise_targets_index = (df_altitudes['alt rise start'] > self.Altitude_constraint) \
-                             & (df_altitudes['alt rise end'] > self.Altitude_constraint)
+        # Rising targets: observable at the end of the night (sunrise)
+        rise_targets_index = df_altitudes['alt rise'] > self.Altitude_constraint
         self.priority['rise'][rise_targets_index] = True
 
-        both_targets_index = (df_altitudes['alt rise start'] > self.Altitude_constraint) & \
-                             (df_altitudes['alt set start'] > self.Altitude_constraint)
+        # Both: observable throughout the entire night
+        both_targets_index = (df_altitudes['alt set'] > self.Altitude_constraint) & \
+                            (df_altitudes['alt rise'] > self.Altitude_constraint)
         self.priority['both'][both_targets_index] = True
 
         self.priority['priority'][both_targets_index] = self.priority['priority'][both_targets_index] * 2
@@ -2350,10 +2381,10 @@ class Schedules:
 
                 # get the precision and components used to calculate it (generates grid if not already present)
                 try:
-                    result = mphot.get_precision_gaia(props_telescope_ANDOR, props_sky, source_id=gaia_id, Teff=Teff_target)
+                    result = mphot.get_precision(props_telescope_ANDOR, props_sky, Teff=Teff_target, distance=dist_target)
                 except FileNotFoundError:
                     print(Fore.GREEN + 'INFO: ' + Fore.BLACK + ' Re-running the grid for mphot, can take 30s')
-                    result = mphot.get_precision_gaia(props_telescope_ANDOR, props_sky, source_id=gaia_id, Teff=Teff_target, override_grid=True)
+                    result = mphot.get_precision(props_telescope_ANDOR, props_sky, Teff=Teff_target, distance=dist_target, override_grid=True)
                     
                 # extract exposure time
                 image_precision, binned_precision, components = result                

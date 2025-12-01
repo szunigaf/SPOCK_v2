@@ -190,7 +190,7 @@ def upload_np(t_now, nb_day, telescope):
                     "Zip Plans_by_dates folder uploaded on the HUB for",
                     telescope,
                 )
-                if (telescope == "Callisto"):
+                if (telescope == "Callisto") or (telescope == "Ganymede"):
                     
                     sftp_cambridge.put(path_local_astra_jsonl, path_database_astra)
                     print(

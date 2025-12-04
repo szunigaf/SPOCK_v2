@@ -1111,8 +1111,8 @@ class Schedules:
 
             print("INFO STAR SPIRIT: ", target_list["Teff"][i].values,
                                          target_list["distance"][i].values)
-            spirit = mphot.get_precision_gaia(props_callisto, props_sky, source_id=target_list["Gaia_ID"][i].values[0],
-                                        Teff=target_list["Teff"][i].values[0])
+            spirit = mphot.get_precision(props_callisto, props_sky,#, source_id=target_list["Gaia_ID"][i].values[0],
+                                        Teff=target_list["Teff"][i].values[0],distance=target_list["distance"][i].values[0])
             texp = int(spirit['components']['t [s]'][0])
             filt_ = 'zYJ'
 
@@ -1161,12 +1161,12 @@ class Schedules:
 
             # get the precision and components used to calculate it (generates grid if not already present)
             try:
-                andor = mphot.get_precision_gaia(props_telescope_ANDOR, props_sky, source_id=target_list["Gaia_ID"][i].values[0],
-                                            Teff=target_list["Teff"][i].values[0])
+                andor = mphot.get_precision(props_telescope_ANDOR, props_sky, #source_id=target_list["Gaia_ID"][i].values[0],
+                                            Teff=target_list["Teff"][i].values[0],distance=target_list["distance"][i].values[0])
             except FileNotFoundError:
                 print(Fore.GREEN + 'INFO: ' + Fore.BLACK + ' Re-running the grid for mphot, can take 30s')
-                andor = mphot.get_precision_gaia(props_telescope_ANDOR, props_sky, source_id=target_list["Gaia_ID"][i].values[0],
-                                            Teff=target_list["Teff"][i].values[0], override_grid=True)
+                andor = mphot.get_precision(props_telescope_ANDOR, props_sky, #source_id=target_list["Gaia_ID"][i].values[0],
+                                            Teff=target_list["Teff"][i].values[0], distance=target_list["distance"][i].values[0], override_grid=True)
             except TypeError:
                 sys.exit(Fore.RED + 'ERROR: ' + Fore.BLACK + ' Please make sure the Teff and Gaia ID are provided in the WG6 spreadsheet')
                 sys.exit(1)
@@ -1201,12 +1201,12 @@ class Schedules:
                 }
 
                 try:
-                    andor = mphot.get_precision_gaia(props_telescope_ANDOR, props_sky, source_id=target_list["Gaia_ID"][i].values[0],
-                                                Teff=target_list["Teff"][i].values[0])
+                    andor = mphot.get_precision(props_telescope_ANDOR, props_sky, #source_id=target_list["Gaia_ID"][i].values[0],
+                                                Teff=target_list["Teff"][i].values[0],distance=target_list["distance"][i].values[0])
                 except FileNotFoundError:
                     print(Fore.GREEN + 'INFO: ' + Fore.BLACK + ' Re-running the grid for mphot, can take 30s')
-                    andor = mphot.get_precision_gaia(props_telescope_ANDOR, props_sky, source_id=target_list["Gaia_ID"][i].values[0],
-                                                Teff=target_list["Teff"][i].values[0], override_grid=True)
+                    andor = mphot.get_precision(props_telescope_ANDOR, props_sky, #source_id=target_list["Gaia_ID"][i].values[0],
+                                                Teff=target_list["Teff"][i].values[0], distance=target_list["distance"][i].values[0], override_grid=True)
                 
                 # extract exposure time
                 image_precision, binned_precision, components = andor                

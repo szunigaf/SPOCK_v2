@@ -2300,7 +2300,7 @@ class Schedules:
             image_precision, binned_precision, components = result
             exposure_time = components["t [s]"]
 
-            while exposure_time < 10:
+            while exposure_time < 10 and filt_idx < len(filters) - 1:
 
                 filt_idx += 1
                 filt_ = filters[filt_idx]
@@ -2336,6 +2336,10 @@ class Schedules:
                 # extract exposure time
                 image_precision, binned_precision, components = result                
                 exposure_time = int(components["t [s]"])
+                
+            if exposure_time < 10:
+                print(Fore.YELLOW + 'WARNING: ' + Fore.BLACK + f'No filter found with exposure_time >= 10s for target {i}, the target needs defocusing. Setting the filter to {filt_} with exposure_time fixed to 10s.')
+                exposure_time = 10
             self.target_table_spc['Filter_spc'][i]=filt_
         texp = exposure_time
 

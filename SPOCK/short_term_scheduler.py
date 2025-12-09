@@ -1080,7 +1080,8 @@ class Schedules:
 
         if self.telescope == 'Callisto':
             #filters list
-            possible_filters = ['zYJ','SPC_J','SPC_H']
+            possible_filters = ['zYJ','SPC_J','SPC_H'] # We're not looping here
+            filt_ = target_list['Filter_spc'][i].values[0]
 
             #mphot computation
             efficiencyFile_SPIRIT = path_mphot + '/resources/systems/speculoos_PIRT_1280SciCam_-60.csv'
@@ -1109,12 +1110,14 @@ class Schedules:
                 "ap_rad": 3
             }
 
-            print("INFO STAR SPIRIT: ", target_list["Teff"][i].values,
-                                         target_list["distance"][i].values)
+            # print("INFO STAR SPIRIT: ", target_list["Teff"][i].values[0],
+            #                              target_list["distance"][i].values[0])
             spirit = mphot.get_precision(props_callisto, props_sky,#, source_id=target_list["Gaia_ID"][i].values[0],
                                         Teff=target_list["Teff"][i].values[0],distance=target_list["distance"][i].values[0])
-            texp = int(spirit['components']['t [s]'][0])
-            filt_ = 'zYJ'
+            # extract exposure time
+            image_precision, binned_precision, components = spirit
+            texp = int(components["t [s]"])
+            #filt_ = 'zYJ'
 
         else:
             #filters list
@@ -1174,7 +1177,7 @@ class Schedules:
             image_precision, binned_precision, components = andor
             texp = int(components["t [s]"])
             
-            while texp < 10:
+            while texp < 10 and filt_idx < len(filters) - 1:
 
                 filt_idx += 1
                 filt_ = filters[filt_idx]
@@ -1211,10 +1214,11 @@ class Schedules:
                 # extract exposure time
                 image_precision, binned_precision, components = andor                
                 texp = int(components["t [s]"])
-
                 if self.telescope == 'Artemis': # Artemis plans do not want '
                     filt_ = filt_.replace('\'', '')
-
+            if texp < 10:
+                print(Fore.YELLOW + 'WARNING: ' + Fore.BLACK + f'No filter found with exposure_time >= 10s for this target, it needs defocusing. Setting the filter to {filt_} with exposure_time fixed to 10s.')
+            texp = 10
 
         target_list['Filter_spc'][i] = filt_
 

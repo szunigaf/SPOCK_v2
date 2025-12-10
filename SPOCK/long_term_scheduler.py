@@ -2248,8 +2248,9 @@ class Schedules:
             # extract exposure time
             image_precision, binned_precision, components = result
             exposure_time = components["t [s]"]
+            if exposure_time < 1: 
+                exposure_time = 1
             self.target_table_spc['Filter_spc'][i]=filt_
-
 
         else:
             filters = ['I+z', 'z', 'i', 'r']

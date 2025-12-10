@@ -781,7 +781,8 @@ class Schedules:
                 sys.exit(Fore.RED + 'ERROR:  ' + Fore.BLACK + ' No block to insert ')
             end_before_cut = self.scheduled_table['end time (UTC)'][i]
             start_before_cut = self.scheduled_table['start time (UTC)'][i]
-
+            
+            skip_scheduled_row = False
             if self.SS1_night_blocks is None:
                 sys.exit('WARNING : No block to insert !')
 
@@ -855,7 +856,9 @@ class Schedules:
                         (self.SS1_night_blocks['end time (UTC)'][0] <=
                          self.end_of_observation.iso):
                     print(Fore.GREEN + 'INFO: ' + Fore.BLACK + ' situation 4')
-                    self.scheduled_table[i] = self.SS1_night_blocks[0]  # a way to erase self.scheduled_table block
+                    skip_scheduled_row = True
+                    # self.scheduled_table[i] = self.SS1_night_blocks[0]  # a way to erase self.scheduled_table block
+                    
 
                 # situation 5
                 elif (self.SS1_night_blocks['end time (UTC)'][0] >=
@@ -863,7 +866,8 @@ class Schedules:
                     print(Fore.GREEN + 'INFO: ' + Fore.BLACK + ' situation 5')
                     self.SS1_night_blocks['end time (UTC)'][0] = \
                         self.end_of_observation.iso
-                    self.scheduled_table[i] = self.SS1_night_blocks[0]  # a way to erase self.scheduled_table block
+                    skip_scheduled_row = True
+                    #self.scheduled_table[i] = self.SS1_night_blocks[0]  # a way to erase self.scheduled_table block
 
             if self.SS1_night_blocks['start time (UTC)'][0] >= start_before_cut:
 
@@ -872,7 +876,7 @@ class Schedules:
                         (self.SS1_night_blocks['end time (UTC)'][0] <= end_before_cut):
                     print(Fore.GREEN + 'INFO: ' + Fore.BLACK + ' situation 6')
                     self.scheduled_table['end time (UTC)'][i] = self.SS1_night_blocks['start time (UTC)'][0]
-                    self.scheduled_table['duration (minutes)'] = \
+                    self.scheduled_table['duration (minutes)'][i] = \
                         (Time(self.scheduled_table['end time (UTC)'][i]) -
                          Time(self.scheduled_table['start time (UTC)'][i])).value * 24 * 60
                     
@@ -929,7 +933,7 @@ class Schedules:
                         else:
                             print(Fore.GREEN + 'INFO: ' + Fore.BLACK + ' situation 9')
                             self.scheduled_table['end time (UTC)'][i] = self.SS1_night_blocks['start time (UTC)'][0]
-                            self.scheduled_table['duration (minutes)'] = \
+                            self.scheduled_table['duration (minutes)'][i] = \
                                 (Time(self.scheduled_table['end time (UTC)'][i]) -
                                  Time(self.scheduled_table['start time (UTC)'][i])).value * 24 * 60
 
@@ -953,23 +957,23 @@ class Schedules:
                                                               'configuration':
                                                                   self.SS1_night_blocks['configuration'][0]}])
             end_scheduled_table = pd.concat([end_scheduled_table, new_row], ignore_index=True)
-
-            new_row = pd.DataFrame([{'target': self.scheduled_table['target'][i],
-                                                              'start time (UTC)':
-                                                                  self.scheduled_table['start time (UTC)'][i],
-                                                              'end time (UTC)':
-                                                                  self.scheduled_table['end time (UTC)'][i],
-                                                              'duration (minutes)':
-                                                                  self.scheduled_table['duration (minutes)'][i],
-                                                              'ra (h)': self.scheduled_table['ra (h)'][i],
-                                                              'ra (m)': self.scheduled_table['ra (m)'][i],
-                                                              'ra (s)': self.scheduled_table['ra (s)'][i],
-                                                              'dec (d)': self.scheduled_table['dec (d)'][i],
-                                                              'dec (m)': self.scheduled_table['dec (m)'][i],
-                                                              'dec (s)': self.scheduled_table['dec (s)'][i],
-                                                              'configuration':
-                                                                  self.scheduled_table['configuration'][i]}])
-            end_scheduled_table = pd.concat([end_scheduled_table, new_row], ignore_index=True)
+            if not skip_scheduled_row:
+                new_row = pd.DataFrame([{'target': self.scheduled_table['target'][i],
+                                                                'start time (UTC)':
+                                                                    self.scheduled_table['start time (UTC)'][i],
+                                                                'end time (UTC)':
+                                                                    self.scheduled_table['end time (UTC)'][i],
+                                                                'duration (minutes)':
+                                                                    self.scheduled_table['duration (minutes)'][i],
+                                                                'ra (h)': self.scheduled_table['ra (h)'][i],
+                                                                'ra (m)': self.scheduled_table['ra (m)'][i],
+                                                                'ra (s)': self.scheduled_table['ra (s)'][i],
+                                                                'dec (d)': self.scheduled_table['dec (d)'][i],
+                                                                'dec (m)': self.scheduled_table['dec (m)'][i],
+                                                                'dec (s)': self.scheduled_table['dec (s)'][i],
+                                                                'configuration':
+                                                                    self.scheduled_table['configuration'][i]}])
+                end_scheduled_table = pd.concat([end_scheduled_table, new_row], ignore_index=True)
 
         end_scheduled_table = Table.from_pandas(end_scheduled_table)
         end_scheduled_table = unique(end_scheduled_table, keys='target')
@@ -1218,7 +1222,7 @@ class Schedules:
                     filt_ = filt_.replace('\'', '')
             if texp < 10:
                 print(Fore.YELLOW + 'WARNING: ' + Fore.BLACK + f'No filter found with exposure_time >= 10s for this target, it needs defocusing. Setting the filter to {filt_} with exposure_time fixed to 10s.')
-            texp = 10
+                texp = 10
 
         target_list['Filter_spc'][i] = filt_
 

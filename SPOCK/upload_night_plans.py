@@ -153,7 +153,8 @@ def upload_np(t_now, nb_day, telescope):
 
             if (
                 (telescope == "Io")
-                or telescope == ("Europa")
+                or (telescope == "Europa")
+                or (telescope == "Ganymede")
                 or (telescope == "Callisto")
             ):
 
@@ -182,7 +183,7 @@ def upload_np(t_now, nb_day, telescope):
                     telescope,
                 )
 
-                # print(f"Uploading from local: {path_local_zip_file} to remote: {path_hub_zip_files}")
+                print(f"Uploading from local: {path_local_zip_file} to remote: {path_hub_zip_files}")
                 sftp_SSO_hub.put(path_local_zip_file, path_hub_zip_files)
                 print(
                     "----->",
@@ -265,7 +266,7 @@ def upload_np(t_now, nb_day, telescope):
                 )
 
                 if telescope == "Saint-Ex":
-                    sftp_cambridge.put(path_local_astra, path_database_astra)
+                    sftp_cambridge.put(path_local_astra_csv, path_database_astra)
                     print(
                         "----->",
                         t_now,

@@ -3,6 +3,7 @@ import subprocess
 import os
 from astropy.time import Time
 from SPOCK import pwd_HUB, pwd_appcs, pwd_SNO_Reduc1, path_spock
+import traceback
 
 import paramiko
 
@@ -141,7 +142,7 @@ def upload_np(t_now, nb_day, telescope):
                 telescope,
                 "schedule",
                 "Astra",
-                csv_file,
+                jsonl_file,
             )
             path_local_astra_csv = os.path.join(
                 path_spock + "/DATABASE/", telescope, "Astra/", csv_file
@@ -152,7 +153,7 @@ def upload_np(t_now, nb_day, telescope):
 
             if (
                 (telescope == "Io")
-                or telescope == ("Europa")
+                or (telescope == "Europa")
                 or (telescope == "Ganymede")
                 or (telescope == "Callisto")
             ):
@@ -182,7 +183,7 @@ def upload_np(t_now, nb_day, telescope):
                     telescope,
                 )
 
-                # print(f"Uploading from local: {path_local_zip_file} to remote: {path_hub_zip_files}")
+                print(f"Uploading from local: {path_local_zip_file} to remote: {path_hub_zip_files}")
                 sftp_SSO_hub.put(path_local_zip_file, path_hub_zip_files)
                 print(
                     "----->",
@@ -230,13 +231,13 @@ def upload_np(t_now, nb_day, telescope):
                         csv_file,
                     )
                     )
-                    sftp_SSO_hub.put(path_local_astra_csv, path_hub_astra)
-                    print(
-                        "----->",
-                        t_now,
-                        "Astra folder updated on the HUB for",
-                        telescope,
-                    )
+                    # sftp_SSO_hub.put(path_local_astra_csv, path_hub_astra)
+                    # print(
+                    #     "----->",
+                    #     t_now,
+                    #     "Astra folder updated on the HUB for",
+                    #     telescope,
+                    # )
 
             if (telescope == "Artemis") or (telescope == "Saint-Ex"):
                 # Upload the file
@@ -265,7 +266,7 @@ def upload_np(t_now, nb_day, telescope):
                 )
 
                 if telescope == "Saint-Ex":
-                    sftp_cambridge.put(path_local_astra, path_database_astra)
+                    sftp_cambridge.put(path_local_astra_csv, path_database_astra)
                     print(
                         "----->",
                         t_now,
@@ -284,10 +285,33 @@ def upload_np(t_now, nb_day, telescope):
 
     except Exception as e:
         print(f"Failed to connect: {e}")
+        traceback.print_exc()
 
     finally:
-        ssh_client_cambridge.close()
-        ssh_client_SSO_hub.close()
+        try:
+            sftp_cambridge.close()
+        except:
+            pass
+        try:
+            sftp_SSO_hub.close()
+        except:
+            pass
+        try:
+            sftp_SNO_hub.close()
+        except:
+            pass
+        try:
+            ssh_client_cambridge.close()
+        except:
+            pass
+        try:
+            ssh_client_SSO_hub.close()
+        except:
+            pass
+        try:
+            ssh_client_SNO_hub.close()
+        except:
+            pass
 
 def upload_np_ts(t_now, nb_days):
     t0 = Time(t_now)

@@ -1812,8 +1812,15 @@ class Schedules:
 
         blocks = []
         # if self.target_table_spc['texp_spc'][self.idx_first_target] == 0:
+        if self.first_target['both']:
+            print(Fore.GREEN + 'INFO: ' + Fore.BLACK + ' First target is \'both\'')
+            a = ObservingBlock(self.targets[self.idx_first_target_spc], dur_obs_both_target, -1,
+                               constraints=constraints_all,
+                               configuration={"filt": str(self.target_table_spc['Filter_spc'][self.idx_first_target_spc]),
+                                              "texp": str(self.target_table_spc['texp_spc'][self.idx_first_target_spc])})
+            blocks.append(a)
 
-        if self.first_target['set']:
+        elif self.first_target['set']:
             print(Fore.GREEN + 'INFO: ' + Fore.BLACK + ' First target is \'set\'')
             a = ObservingBlock(self.targets[self.idx_first_target_spc], dur_obs_set_target, -1,
                                constraints=constraints_set_target,
@@ -1826,15 +1833,7 @@ class Schedules:
                                               "texp": str(self.target_table_spc['texp_spc'][self.idx_second_target_spc])})
             blocks.append(b)
 
-        if self.first_target['both']:
-            print(Fore.GREEN + 'INFO: ' + Fore.BLACK + ' First target is \'both\'')
-            a = ObservingBlock(self.targets[self.idx_first_target_spc], dur_obs_both_target, -1,
-                               constraints=constraints_all,
-                               configuration={"filt": str(self.target_table_spc['Filter_spc'][self.idx_first_target_spc]),
-                                              "texp": str(self.target_table_spc['texp_spc'][self.idx_first_target_spc])})
-            blocks.append(a)
-
-        if self.first_target['rise']:
+        elif self.first_target['rise']:
             print(Fore.GREEN + 'INFO: ' + Fore.BLACK + ' First target is \'rise\'')
             b = ObservingBlock(self.targets[self.idx_second_target_spc], dur_obs_set_target, -1,
                                constraints=constraints_set_target,
@@ -2249,8 +2248,9 @@ class Schedules:
             # extract exposure time
             image_precision, binned_precision, components = result
             exposure_time = components["t [s]"]
+            if exposure_time < 1: 
+                exposure_time = 1
             self.target_table_spc['Filter_spc'][i]=filt_
-
 
         else:
             filters = ['I+z', 'z', 'i', 'r']
@@ -2301,7 +2301,7 @@ class Schedules:
             image_precision, binned_precision, components = result
             exposure_time = components["t [s]"]
 
-            while exposure_time < 10:
+            while exposure_time < 10 and filt_idx < len(filters) - 1:
 
                 filt_idx += 1
                 filt_ = filters[filt_idx]
@@ -2337,6 +2337,10 @@ class Schedules:
                 # extract exposure time
                 image_precision, binned_precision, components = result                
                 exposure_time = int(components["t [s]"])
+                
+            if exposure_time < 10:
+                print(Fore.YELLOW + 'WARNING: ' + Fore.BLACK + f'No filter found with exposure_time >= 10s for target {i}, the target needs defocusing. Setting the filter to {filt_} with exposure_time fixed to 10s.')
+                exposure_time = 10
             self.target_table_spc['Filter_spc'][i]=filt_
         texp = exposure_time
 

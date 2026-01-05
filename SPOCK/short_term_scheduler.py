@@ -781,7 +781,8 @@ class Schedules:
                 sys.exit(Fore.RED + 'ERROR:  ' + Fore.BLACK + ' No block to insert ')
             end_before_cut = self.scheduled_table['end time (UTC)'][i]
             start_before_cut = self.scheduled_table['start time (UTC)'][i]
-
+            
+            skip_scheduled_row = False
             if self.SS1_night_blocks is None:
                 sys.exit('WARNING : No block to insert !')
 
@@ -855,7 +856,9 @@ class Schedules:
                         (self.SS1_night_blocks['end time (UTC)'][0] <=
                          self.end_of_observation.iso):
                     print(Fore.GREEN + 'INFO: ' + Fore.BLACK + ' situation 4')
-                    self.scheduled_table[i] = self.SS1_night_blocks[0]  # a way to erase self.scheduled_table block
+                    skip_scheduled_row = True
+                    # self.scheduled_table[i] = self.SS1_night_blocks[0]  # a way to erase self.scheduled_table block
+                    
 
                 # situation 5
                 elif (self.SS1_night_blocks['end time (UTC)'][0] >=
@@ -863,7 +866,8 @@ class Schedules:
                     print(Fore.GREEN + 'INFO: ' + Fore.BLACK + ' situation 5')
                     self.SS1_night_blocks['end time (UTC)'][0] = \
                         self.end_of_observation.iso
-                    self.scheduled_table[i] = self.SS1_night_blocks[0]  # a way to erase self.scheduled_table block
+                    skip_scheduled_row = True
+                    #self.scheduled_table[i] = self.SS1_night_blocks[0]  # a way to erase self.scheduled_table block
 
             if self.SS1_night_blocks['start time (UTC)'][0] >= start_before_cut:
 
@@ -872,7 +876,7 @@ class Schedules:
                         (self.SS1_night_blocks['end time (UTC)'][0] <= end_before_cut):
                     print(Fore.GREEN + 'INFO: ' + Fore.BLACK + ' situation 6')
                     self.scheduled_table['end time (UTC)'][i] = self.SS1_night_blocks['start time (UTC)'][0]
-                    self.scheduled_table['duration (minutes)'] = \
+                    self.scheduled_table['duration (minutes)'][i] = \
                         (Time(self.scheduled_table['end time (UTC)'][i]) -
                          Time(self.scheduled_table['start time (UTC)'][i])).value * 24 * 60
                     
@@ -929,7 +933,7 @@ class Schedules:
                         else:
                             print(Fore.GREEN + 'INFO: ' + Fore.BLACK + ' situation 9')
                             self.scheduled_table['end time (UTC)'][i] = self.SS1_night_blocks['start time (UTC)'][0]
-                            self.scheduled_table['duration (minutes)'] = \
+                            self.scheduled_table['duration (minutes)'][i] = \
                                 (Time(self.scheduled_table['end time (UTC)'][i]) -
                                  Time(self.scheduled_table['start time (UTC)'][i])).value * 24 * 60
 
@@ -953,23 +957,23 @@ class Schedules:
                                                               'configuration':
                                                                   self.SS1_night_blocks['configuration'][0]}])
             end_scheduled_table = pd.concat([end_scheduled_table, new_row], ignore_index=True)
-
-            new_row = pd.DataFrame([{'target': self.scheduled_table['target'][i],
-                                                              'start time (UTC)':
-                                                                  self.scheduled_table['start time (UTC)'][i],
-                                                              'end time (UTC)':
-                                                                  self.scheduled_table['end time (UTC)'][i],
-                                                              'duration (minutes)':
-                                                                  self.scheduled_table['duration (minutes)'][i],
-                                                              'ra (h)': self.scheduled_table['ra (h)'][i],
-                                                              'ra (m)': self.scheduled_table['ra (m)'][i],
-                                                              'ra (s)': self.scheduled_table['ra (s)'][i],
-                                                              'dec (d)': self.scheduled_table['dec (d)'][i],
-                                                              'dec (m)': self.scheduled_table['dec (m)'][i],
-                                                              'dec (s)': self.scheduled_table['dec (s)'][i],
-                                                              'configuration':
-                                                                  self.scheduled_table['configuration'][i]}])
-            end_scheduled_table = pd.concat([end_scheduled_table, new_row], ignore_index=True)
+            if not skip_scheduled_row:
+                new_row = pd.DataFrame([{'target': self.scheduled_table['target'][i],
+                                                                'start time (UTC)':
+                                                                    self.scheduled_table['start time (UTC)'][i],
+                                                                'end time (UTC)':
+                                                                    self.scheduled_table['end time (UTC)'][i],
+                                                                'duration (minutes)':
+                                                                    self.scheduled_table['duration (minutes)'][i],
+                                                                'ra (h)': self.scheduled_table['ra (h)'][i],
+                                                                'ra (m)': self.scheduled_table['ra (m)'][i],
+                                                                'ra (s)': self.scheduled_table['ra (s)'][i],
+                                                                'dec (d)': self.scheduled_table['dec (d)'][i],
+                                                                'dec (m)': self.scheduled_table['dec (m)'][i],
+                                                                'dec (s)': self.scheduled_table['dec (s)'][i],
+                                                                'configuration':
+                                                                    self.scheduled_table['configuration'][i]}])
+                end_scheduled_table = pd.concat([end_scheduled_table, new_row], ignore_index=True)
 
         end_scheduled_table = Table.from_pandas(end_scheduled_table)
         end_scheduled_table = unique(end_scheduled_table, keys='target')
@@ -1080,7 +1084,8 @@ class Schedules:
 
         if self.telescope == 'Callisto':
             #filters list
-            possible_filters = ['zYJ','SPC_J','SPC_H']
+            possible_filters = ['zYJ','SPC_J','SPC_H'] # We're not looping here
+            filt_ = target_list['Filter_spc'][i].values[0]
 
             #mphot computation
             efficiencyFile_SPIRIT = path_mphot + '/resources/systems/speculoos_PIRT_1280SciCam_-60.csv'
@@ -1109,12 +1114,14 @@ class Schedules:
                 "ap_rad": 3
             }
 
-            print("INFO STAR SPIRIT: ", target_list["Teff"][i].values,
-                                         target_list["distance"][i].values)
-            spirit = mphot.get_precision_gaia(props_callisto, props_sky, source_id=target_list["Gaia_ID"][i].values[0],
-                                        Teff=target_list["Teff"][i].values[0])
-            texp = int(spirit['components']['t [s]'][0])
-            filt_ = 'zYJ'
+            # print("INFO STAR SPIRIT: ", target_list["Teff"][i].values[0],
+            #                              target_list["distance"][i].values[0])
+            spirit = mphot.get_precision(props_callisto, props_sky,#, source_id=target_list["Gaia_ID"][i].values[0],
+                                        Teff=target_list["Teff"][i].values[0],distance=target_list["distance"][i].values[0])
+            # extract exposure time
+            image_precision, binned_precision, components = spirit
+            texp = int(components["t [s]"])
+            #filt_ = 'zYJ'
 
         else:
             #filters list
@@ -1161,12 +1168,12 @@ class Schedules:
 
             # get the precision and components used to calculate it (generates grid if not already present)
             try:
-                andor = mphot.get_precision_gaia(props_telescope_ANDOR, props_sky, source_id=target_list["Gaia_ID"][i].values[0],
-                                            Teff=target_list["Teff"][i].values[0])
+                andor = mphot.get_precision(props_telescope_ANDOR, props_sky, #source_id=target_list["Gaia_ID"][i].values[0],
+                                            Teff=target_list["Teff"][i].values[0],distance=target_list["distance"][i].values[0])
             except FileNotFoundError:
                 print(Fore.GREEN + 'INFO: ' + Fore.BLACK + ' Re-running the grid for mphot, can take 30s')
-                andor = mphot.get_precision_gaia(props_telescope_ANDOR, props_sky, source_id=target_list["Gaia_ID"][i].values[0],
-                                            Teff=target_list["Teff"][i].values[0], override_grid=True)
+                andor = mphot.get_precision(props_telescope_ANDOR, props_sky, #source_id=target_list["Gaia_ID"][i].values[0],
+                                            Teff=target_list["Teff"][i].values[0], distance=target_list["distance"][i].values[0], override_grid=True)
             except TypeError:
                 sys.exit(Fore.RED + 'ERROR: ' + Fore.BLACK + ' Please make sure the Teff and Gaia ID are provided in the WG6 spreadsheet')
                 sys.exit(1)
@@ -1174,7 +1181,7 @@ class Schedules:
             image_precision, binned_precision, components = andor
             texp = int(components["t [s]"])
             
-            while texp < 10:
+            while texp < 10 and filt_idx < len(filters) - 1:
 
                 filt_idx += 1
                 filt_ = filters[filt_idx]
@@ -1201,20 +1208,21 @@ class Schedules:
                 }
 
                 try:
-                    andor = mphot.get_precision_gaia(props_telescope_ANDOR, props_sky, source_id=target_list["Gaia_ID"][i].values[0],
-                                                Teff=target_list["Teff"][i].values[0])
+                    andor = mphot.get_precision(props_telescope_ANDOR, props_sky, #source_id=target_list["Gaia_ID"][i].values[0],
+                                                Teff=target_list["Teff"][i].values[0],distance=target_list["distance"][i].values[0])
                 except FileNotFoundError:
                     print(Fore.GREEN + 'INFO: ' + Fore.BLACK + ' Re-running the grid for mphot, can take 30s')
-                    andor = mphot.get_precision_gaia(props_telescope_ANDOR, props_sky, source_id=target_list["Gaia_ID"][i].values[0],
-                                                Teff=target_list["Teff"][i].values[0], override_grid=True)
+                    andor = mphot.get_precision(props_telescope_ANDOR, props_sky, #source_id=target_list["Gaia_ID"][i].values[0],
+                                                Teff=target_list["Teff"][i].values[0], distance=target_list["distance"][i].values[0], override_grid=True)
                 
                 # extract exposure time
                 image_precision, binned_precision, components = andor                
                 texp = int(components["t [s]"])
-
                 if self.telescope == 'Artemis': # Artemis plans do not want '
                     filt_ = filt_.replace('\'', '')
-
+            if texp < 10:
+                print(Fore.YELLOW + 'WARNING: ' + Fore.BLACK + f'No filter found with exposure_time >= 10s for this target, it needs defocusing. Setting the filter to {filt_} with exposure_time fixed to 10s.')
+                texp = 10
 
         target_list['Filter_spc'][i] = filt_
 

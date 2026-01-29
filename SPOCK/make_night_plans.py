@@ -637,7 +637,7 @@ def make_astra_schedule_file(day, nb_days, telescope):
         df = pd.concat([df, calibration_row], ignore_index=True)
         #df = df.append(calibration_row, ignore_index=True)
         #To .csv file
-        if (telescope == "Callisto") or (telescope=="Ganymede"):
+        if (telescope == "Callisto") or (telescope=="Ganymede") or (telescope=="Io") or (telescope=="Europa"):
             df.to_json(path_spock + '/DATABASE/' + str(telescope) + "/Astra/" +
                   str(telescope) + '_' + str(t_now) + '.jsonl', orient="records", lines=True)
         else:

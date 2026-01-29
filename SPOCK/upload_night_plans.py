@@ -184,53 +184,56 @@ def upload_np(t_now, nb_day, telescope):
                 )
 
                 print(f"Uploading from local: {path_local_zip_file} to remote: {path_hub_zip_files}")
-                sftp_SSO_hub.put(path_local_zip_file, path_hub_zip_files)
-                print(
-                    "----->",
-                    t_now,
-                    "Zip Plans_by_dates folder uploaded on the HUB for",
-                    telescope,
-                )
-                if (telescope == "Callisto") or (telescope == "Ganymede"):
-                    
-                    sftp_cambridge.put(path_local_astra_jsonl, path_database_astra)
-                    print(
-                    "----->",
-                    t_now,
-                    "Astra folder updated on the Cambridge server for",
-                    telescope,
-                    )
-                    path_hub_astra = os.path.normpath(
-                        os.path.join(
-                            "/home/speculoos/Plans_scheduler/",
-                            telescope,
-                            "Astra/",
-                            jsonl_file,
-                        )
-                    )
-                    sftp_SSO_hub.put(path_local_astra_jsonl, path_hub_astra)
+                try:
+                    sftp_SSO_hub.put(path_local_zip_file, path_hub_zip_files)
                     print(
                         "----->",
                         t_now,
-                        "Astra folder updated on the HUB for",
+                        "Zip Plans_by_dates folder uploaded on the HUB for",
                         telescope,
                     )
-                else:
-                    sftp_cambridge.put(path_local_astra_csv, path_database_astra)
-                    print(
-                    "----->",
-                    t_now,
-                    "Astra folder updated on the Cambridge server for",
-                    telescope,
-                    )
-                    path_hub_astra = os.path.normpath(
+                except OSError as e:
+                    print(f"SFTP upload failed: {e}")
+                # if (telescope == "Callisto") or (telescope == "Ganymede"):
+                    
+                sftp_cambridge.put(path_local_astra_jsonl, path_database_astra)
+                print(
+                "----->",
+                t_now,
+                "Astra folder updated on the Cambridge server for",
+                telescope,
+                )
+                path_hub_astra = os.path.normpath(
                     os.path.join(
                         "/home/speculoos/Plans_scheduler/",
                         telescope,
                         "Astra/",
-                        csv_file,
+                        jsonl_file,
                     )
-                    )
+                )
+                sftp_SSO_hub.put(path_local_astra_jsonl, path_hub_astra)
+                print(
+                    "----->",
+                    t_now,
+                    "Astra folder updated on the HUB for",
+                    telescope,
+                )
+                # else:
+                #     sftp_cambridge.put(path_local_astra_csv, path_database_astra)
+                #     print(
+                #     "----->",
+                #     t_now,
+                #     "Astra folder updated on the Cambridge server for",
+                #     telescope,
+                #     )
+                #     path_hub_astra = os.path.normpath(
+                #     os.path.join(
+                #         "/home/speculoos/Plans_scheduler/",
+                #         telescope,
+                #         "Astra/",
+                #         csv_file,
+                #     )
+                #     )
                     # sftp_SSO_hub.put(path_local_astra_csv, path_hub_astra)
                     # print(
                     #     "----->",

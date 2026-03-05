@@ -5,7 +5,9 @@ __all__ = ['long_term_scheduler','short_term_scheduler','make_night_plans','plot
 
 __version__ = "2.2.0"
 
-import pkg_resources
+#import pkg_resources
+from importlib.resources import files
+from pathlib import Path
 import os
 import requests
 import yaml
@@ -44,7 +46,7 @@ def index_list1_list2(list1, list2):  # list 2 longer than list 1
     return idx_list1_in_list2, idx_list2_in_list1
 
 def _get_files():
-    data_path = pkg_resources.resource_filename('SPOCK', 'credentials/')
+    data_path = Path(files("SPOCK").joinpath("credentials"))
     if not os.path.exists(data_path):
         os.makedirs(data_path)
     filename_pwd = os.path.join(data_path, 'passwords.csv')

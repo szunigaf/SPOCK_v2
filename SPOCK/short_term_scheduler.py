@@ -136,6 +136,7 @@ class Schedules:
         self.scheduled_table_sorted = None
         self.targets_follow_up = None
         self.target_table_spc_follow_up = None
+        self.target_table_Saint_Ex = None
         self.target_list_follow_up = None
         self.target_list_special = None
         self.targets = None
@@ -213,6 +214,18 @@ class Schedules:
                                                                 "ra": "RA", "dec_err": "DEC_err", "ra_err": "RA_err",
                                                                 "mag_j": "J", "V_mag": "V"})
                 self.targets = target_list_good_coord_format(df=self.target_table_spc)
+
+                # Read Saint-Ex spreadsheet 
+                worksheet_Saint_Ex = sh.worksheet("Annex_Targets_Saint-Ex")
+                dataframe_Saint_Ex = pd.DataFrame(worksheet_Saint_Ex.get_all_records())
+                self.target_table_Saint_Ex = dataframe_Saint_Ex.rename(columns={"Host star name": "Sp_ID", "gaia_dr2": "Gaia_ID",
+                                                                            "dec": "DEC", "ra": "RA","Night (local start)":"night_start",
+                                                                            "Start time (UT)": "start_time", "End time (UT)": "end_time",
+                                                                            "Sp. Type": "SpT", 'Exposure time':"texp", 
+
+                                                                            })
+                self.targets_Saint_Ex = target_list_good_coord_format(df=self.target_table_Saint_Ex)
+
             except ConnectionError:
                 print(Fore.RED + 'ERROR: ' + Fore.BLACK +
                       ' there is a problem with your internet connection. ')
@@ -350,7 +363,7 @@ class Schedules:
         if not dom_rot_possible:
             sys.exit(Fore.RED + 'ERROR:  ' + Fore.BLACK + ' No Dom rotation possible that night')
 
-    def special_target_with_start_end(self, input_name):
+    def special_target_with_start_end(self, input_name, use_Saint_Ex_spreadsheet=False):
         """
         Function to add a special target night block in the plans with specific start/end times
         from self.start_end_range
@@ -363,64 +376,120 @@ class Schedules:
         Create a night block with special target observed in the given time range (self.start_end_range)
 
         """
-        self.observatory = charge_observatories(self.observatory_name)[0]
-        start = self.start_end_range[0]
-        end = self.start_end_range[1]
+        if use_Saint_Ex_spreadsheet is True:
+            self.observatory = charge_observatories(self.observatory_name)[0]
+            start = self.start_end_range[0]
+            end = self.start_end_range[1]
 
-
-        if (start >= self.end_of_observation) or \
-                (end <= self.start_of_observation):
-            sys.exit(Fore.YELLOW + 'WARNING: ' + Fore.BLACK + 'Start time (or End time) is not on the same day.')
-
-        dur_obs_both_target = (self.night_duration() / (2 * u.day)) * 2 * u.day
-        constraints_special_target = [AltitudeConstraint(min=self.altitude_constraint * u.deg),
-                                      MoonSeparationConstraint(min=self.moon_constraint * u.deg),
-                                      TimeConstraint(start, end)]
-        idx_to_insert_target = int(np.where((self.target_table_spc['Sp_ID'] == input_name))[0])
-
-        ## WARNING with Next and Nearest
-        rise_target = self.observatory.target_rise_time(self.start_of_observation, self.targets[idx_to_insert_target],  which='nearest', 
-                                                        horizon= self.altitude_constraint * u.deg)
-        set_target = self.observatory.target_set_time(self.start_of_observation, self.targets[idx_to_insert_target], which='next', 
-                                                        horizon= self.altitude_constraint * u.deg)
-
-        if (rise_target > start) or (set_target < end):   
-            sys.exit(Fore.RED + 'ERROR: ' + Fore.BLACK
-                     + " Observation impossible because the target is not below the altitude constraint at some point during the given time range. If this is not the case this might be due to the setup of the \"which\" argument in the function target_rise_time(). Ask Elsa.")
+            dur_obs_both_target = (self.night_duration() / (2 * u.day)) * 2 * u.day
+            constraints_Saint_Ex_target = [AltitudeConstraint(min=self.altitude_constraint * u.deg),
+                                        MoonSeparationConstraint(min=self.moon_constraint * u.deg),
+                                        TimeConstraint(start, end)]
+            idx_to_insert_target = int(np.where((self.target_table_Saint_Ex['Sp_ID'] == input_name))[0])
+            ## WARNING with Next and Nearest, particularly for Saint-Ex
+            rise_target = self.observatory.target_rise_time(self.start_of_observation, self.targets_Saint_Ex[idx_to_insert_target],  which='nearest', 
+                                                            horizon= self.altitude_constraint * u.deg)
+            set_target = self.observatory.target_set_time(self.start_of_observation, self.targets_Saint_Ex[idx_to_insert_target], which='next', 
+                                                            horizon= self.altitude_constraint * u.deg)
             
-        if (start < self.start_of_observation) or (end > self.end_of_observation):   
-            sys.exit(Fore.RED + 'ERROR: ' + Fore.BLACK
-                     + " Observation impossible because the given range is not fully within the night time. ")
+            if (rise_target > start) or (set_target < end):   
+                sys.exit(Fore.RED + 'ERROR: ' + Fore.BLACK
+                        + " Observation impossible because the target is not below the altitude constraint at some point during the given time range. If this is not the case this might be due to the setup of the \"which\" argument in the function target_rise_time(). Ask Elsa.")
+                
+            if (start < self.start_of_observation) or (end > self.end_of_observation):   
+                sys.exit(Fore.RED + 'ERROR: ' + Fore.BLACK
+                        + " Observation impossible because the given range is not fully within the night time. ")
 
+            if self.target_table_Saint_Ex['texp'][idx_to_insert_target] == 0 \
+                    or self.target_table_Saint_Ex['texp'][idx_to_insert_target] == "00":
+                self.target_table_Saint_Ex['texp'][idx_to_insert_target], \
+                self.target_table_Saint_Ex['Filter'][idx_to_insert_target] = \
+                    self.exposure_time(input_name=self.target_table_Saint_Ex['Sp_ID'][idx_to_insert_target],
+                                    target_list=self.target_table_Saint_Ex)
+            if self.telescope == 'Artemis':
+                self.target_table_Saint_Ex['Filter'][idx_to_insert_target] = \
+                    self.target_table_Saint_Ex['Filter'][idx_to_insert_target].replace('\'', '')
+            observable = is_observable(constraints_Saint_Ex_target, self.observatory, self.targets_Saint_Ex[idx_to_insert_target],
+                                    time_range=(start, end))
+            
+            if observable:
+                blocks = []
+                a = ObservingBlock(self.targets_Saint_Ex[idx_to_insert_target], dur_obs_both_target, -1,
+                                constraints=constraints_Saint_Ex_target,
+                                configuration={"filt": str(self.target_table_Saint_Ex['Filter'][idx_to_insert_target]),
+                                                "texp": str(self.target_table_Saint_Ex['texp'][idx_to_insert_target])})
+                blocks.append(a)
+                transitioner = Transitioner(slew_rate=11 * u.deg / u.second)
+                seq_schedule_ss1 = Schedule(self.day_of_night, self.day_of_night + 1)
+                sequen_scheduler_ss1 = SPECULOOSScheduler(constraints=constraints_Saint_Ex_target, observer=self.observatory,
+                                                        transitioner=transitioner)
+                sequen_scheduler_ss1(blocks, seq_schedule_ss1)
+                self.SS1_night_blocks = seq_schedule_ss1.to_table()
+                return self.SS1_night_blocks
+            else:
+                sys.exit(Fore.RED + 'ERROR: ' + Fore.BLACK
+                        + " Observation on Saint-Ex impossible due to unrespected altitude and/or moon constraints. ")
 
-        if self.target_table_spc['texp_spc'][idx_to_insert_target] == 0 \
-                or self.target_table_spc['texp_spc'][idx_to_insert_target] == "00":
-            self.target_table_spc['texp_spc'][idx_to_insert_target], \
-            self.target_table_spc['Filter_spc'][idx_to_insert_target] = \
-                self.exposure_time(input_name=self.target_table_spc['Sp_ID'][idx_to_insert_target],
-                                   target_list=self.target_table_spc)
-        if self.telescope == 'Artemis':
-            self.target_table_spc['Filter_spc'][idx_to_insert_target] = \
-                self.target_table_spc['Filter_spc'][idx_to_insert_target].replace('\'', '')
-        observable = is_observable(constraints_special_target, self.observatory, self.targets[idx_to_insert_target],
-                                   time_range=(start, end))
-        if observable:
-            blocks = []
-            a = ObservingBlock(self.targets[idx_to_insert_target], dur_obs_both_target, -1,
-                               constraints=constraints_special_target,
-                               configuration={"filt": str(self.target_table_spc['Filter_spc'][idx_to_insert_target]),
-                                              "texp": str(self.target_table_spc['texp_spc'][idx_to_insert_target])})
-            blocks.append(a)
-            transitioner = Transitioner(slew_rate=11 * u.deg / u.second)
-            seq_schedule_ss1 = Schedule(self.day_of_night, self.day_of_night + 1)
-            sequen_scheduler_ss1 = SPECULOOSScheduler(constraints=constraints_special_target, observer=self.observatory,
-                                                      transitioner=transitioner)
-            sequen_scheduler_ss1(blocks, seq_schedule_ss1)
-            self.SS1_night_blocks = seq_schedule_ss1.to_table()
-            return self.SS1_night_blocks
+        # if the telascope is not Saint-Ex
         else:
-            sys.exit(Fore.RED + 'ERROR: ' + Fore.BLACK
-                     + " Observation impossible due to unrespected altitude and/or moon constraints. ")
+            self.observatory = charge_observatories(self.observatory_name)[0]
+            start = self.start_end_range[0]
+            end = self.start_end_range[1]
+
+
+            if (start >= self.end_of_observation) or \
+                    (end <= self.start_of_observation):
+                sys.exit(Fore.YELLOW + 'WARNING: ' + Fore.BLACK + 'Start time (or End time) is not on the same day.')
+
+            dur_obs_both_target = (self.night_duration() / (2 * u.day)) * 2 * u.day
+            constraints_special_target = [AltitudeConstraint(min=self.altitude_constraint * u.deg),
+                                        MoonSeparationConstraint(min=self.moon_constraint * u.deg),
+                                        TimeConstraint(start, end)]
+            idx_to_insert_target = int(np.where((self.target_table_spc['Sp_ID'] == input_name))[0])
+
+            ## WARNING with Next and Nearest
+            rise_target = self.observatory.target_rise_time(self.start_of_observation, self.targets[idx_to_insert_target],  which='nearest', 
+                                                            horizon= self.altitude_constraint * u.deg)
+            set_target = self.observatory.target_set_time(self.start_of_observation, self.targets[idx_to_insert_target], which='next', 
+                                                            horizon= self.altitude_constraint * u.deg)
+
+            if (rise_target > start) or (set_target < end):   
+                sys.exit(Fore.RED + 'ERROR: ' + Fore.BLACK
+                        + " Observation impossible because the target is not below the altitude constraint at some point during the given time range. If this is not the case this might be due to the setup of the \"which\" argument in the function target_rise_time(). Ask Elsa.")
+                
+            if (start < self.start_of_observation) or (end > self.end_of_observation):   
+                sys.exit(Fore.RED + 'ERROR: ' + Fore.BLACK
+                        + " Observation impossible because the given range is not fully within the night time. ")
+
+
+            if self.target_table_spc['texp_spc'][idx_to_insert_target] == 0 \
+                    or self.target_table_spc['texp_spc'][idx_to_insert_target] == "00":
+                self.target_table_spc['texp_spc'][idx_to_insert_target], \
+                self.target_table_spc['Filter_spc'][idx_to_insert_target] = \
+                    self.exposure_time(input_name=self.target_table_spc['Sp_ID'][idx_to_insert_target],
+                                    target_list=self.target_table_spc)
+            if self.telescope == 'Artemis':
+                self.target_table_spc['Filter_spc'][idx_to_insert_target] = \
+                    self.target_table_spc['Filter_spc'][idx_to_insert_target].replace('\'', '')
+            observable = is_observable(constraints_special_target, self.observatory, self.targets[idx_to_insert_target],
+                                    time_range=(start, end))
+            if observable:
+                blocks = []
+                a = ObservingBlock(self.targets[idx_to_insert_target], dur_obs_both_target, -1,
+                                constraints=constraints_special_target,
+                                configuration={"filt": str(self.target_table_spc['Filter_spc'][idx_to_insert_target]),
+                                                "texp": str(self.target_table_spc['texp_spc'][idx_to_insert_target])})
+                blocks.append(a)
+                transitioner = Transitioner(slew_rate=11 * u.deg / u.second)
+                seq_schedule_ss1 = Schedule(self.day_of_night, self.day_of_night + 1)
+                sequen_scheduler_ss1 = SPECULOOSScheduler(constraints=constraints_special_target, observer=self.observatory,
+                                                        transitioner=transitioner)
+                sequen_scheduler_ss1(blocks, seq_schedule_ss1)
+                self.SS1_night_blocks = seq_schedule_ss1.to_table()
+                return self.SS1_night_blocks
+            else:
+                sys.exit(Fore.RED + 'ERROR: ' + Fore.BLACK
+                        + " Observation impossible due to unrespected altitude and/or moon constraints. ")
 
     def special_target(self, input_name):
         """
@@ -744,6 +813,7 @@ class Schedules:
                         return self.SS1_night_blocks
                 else:
                     print(Fore.GREEN + 'INFO: ' + Fore.BLACK + ' no transit of ', df['Sp_ID'][i], ' this day')
+
 
     def locking_observations(self):
         night_block = self.SS1_night_blocks.to_pandas()
@@ -1206,15 +1276,23 @@ class Schedules:
                 # "max_exp" : 120,        # optional, maximum exposure time [s]
                 # "ap_rad" : 3            # optional, aperture radius [FWHM, seeing] for photometry -- 3 default == 7 sigma of Gaussian
                 }
-
-                try:
-                    andor = mphot.get_precision(props_telescope_ANDOR, props_sky, #source_id=target_list["Gaia_ID"][i].values[0],
-                                                Teff=target_list["Teff"][i].values[0],distance=target_list["distance"][i].values[0])
-                except FileNotFoundError:
-                    print(Fore.GREEN + 'INFO: ' + Fore.BLACK + ' Re-running the grid for mphot, can take 30s')
-                    andor = mphot.get_precision(props_telescope_ANDOR, props_sky, #source_id=target_list["Gaia_ID"][i].values[0],
-                                                Teff=target_list["Teff"][i].values[0], distance=target_list["distance"][i].values[0], override_grid=True)
-                
+                if target_list['Teff'][i].values[0] is not None and target_list['distance'][i].values[0] is not None:
+                    try:
+                        andor = mphot.get_precision(props_telescope_ANDOR, props_sky, #source_id=target_list["Gaia_ID"][i].values[0],
+                                                    Teff=target_list["Teff"][i].values[0],distance=target_list["distance"][i].values[0])
+                    except FileNotFoundError:
+                        print(Fore.GREEN + 'INFO: ' + Fore.BLACK + ' Re-running the grid for mphot, can take 30s')
+                        andor = mphot.get_precision(props_telescope_ANDOR, props_sky, #source_id=target_list["Gaia_ID"][i].values[0],
+                                                    Teff=target_list["Teff"][i].values[0], distance=target_list["distance"][i].values[0], override_grid=True)
+                else:
+                    try:
+                        andor = mphot.get_precision_gaia(props_telescope_ANDOR, props_sky, source_id=target_list["Gaia_ID"][i].values[0], 
+                                                     Teff=target_list["Teff"][i].values[0])
+                    except FileNotFoundError:
+                        print(Fore.GREEN + 'INFO: ' + Fore.BLACK + ' Re-running the grid for mphot, can take 30s')
+                        andor = mphot.get_precision_gaia(props_telescope_ANDOR, props_sky, source_id=target_list["Gaia_ID"][i].values[0], 
+                                                     Teff=target_list["Teff"][i].values[0], override_grid=True)
+    
                 # extract exposure time
                 image_precision, binned_precision, components = andor                
                 texp = int(components["t [s]"])

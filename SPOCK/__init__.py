@@ -50,7 +50,9 @@ def _get_files():
     if not os.path.exists(data_path):
         os.makedirs(data_path)
     filename_pwd = os.path.join(data_path, 'passwords.csv')
-    print(Fore.GREEN + 'INFO: ' + Fore.BLACK + ' Please add password.csv file in: ' + data_path)
+    print(Fore.GREEN + 'INFO: ' + Fore.BLACK + ' Please add password.csv file in: ' + str(data_path))
+
+#    print(Fore.GREEN + 'INFO: ' + Fore.BLACK + ' Please add password.csv file in: ' + data_path)
     if os.path.exists(filename_pwd):
         print(Fore.GREEN + 'INFO: ' + Fore.BLACK + ' OK Password file exists')
         # ************************ Read passwords ************************

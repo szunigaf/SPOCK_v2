@@ -430,7 +430,7 @@ class Schedules:
                 sys.exit(Fore.RED + 'ERROR: ' + Fore.BLACK
                         + " Observation on Saint-Ex impossible due to unrespected altitude and/or moon constraints. ")
 
-        # if the telascope is not Saint-Ex
+        # if the telescope is not Saint-Ex
         else:
             self.observatory = charge_observatories(self.observatory_name)[0]
             start = self.start_end_range[0]

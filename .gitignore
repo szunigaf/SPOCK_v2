@@ -185,3 +185,11 @@ __pycache__/
 *.pyc
 
 *.png
+
+test_*.py
+
+test_*.ipynb
+
+SaintEx.csv
+
+notebook_tests.ipynb

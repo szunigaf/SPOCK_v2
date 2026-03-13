@@ -2007,7 +2007,7 @@ class Schedules:
                 if os.path.exists(path_local):
                     nb_local = pd.read_csv(path_local, delimiter=' ', index_col=False)
                     if target_name in np.array(nb_local["target"]):
-                            duration_obs_target_planned += nb_local.loc[nb_local["target"] == target_name, "duration (minutes)"]/60
+                            duration_obs_target_planned += nb_local.loc[nb_local["target"] == target_name, "duration (minutes)"].sum()/60
                     # print(Fore.GREEN + 'INFO: ' + Fore.BLACK + 'Using local plans for ' +
                     #     tel + ' on the ' + d.datetime.strftime("%Y-%m-%d") + " to update hours")
                     
@@ -2015,7 +2015,7 @@ class Schedules:
                 if os.path.exists(path_local_nbp):
                     nb_local_nbp = pd.read_csv(path_local_nbp, delimiter=' ', index_col=False)
                     if target_name in np.array(nb_local_nbp["target"]):
-                            duration_obs_target_planned += nb_local_nbp.loc[nb_local_nbp["target"] == target_name, "duration (minutes)"]/60
+                            duration_obs_target_planned += nb_local_nbp.loc[nb_local_nbp["target"] == target_name, "duration (minutes)"].sum()/60
                     # print(Fore.GREEN + 'INFO: ' + Fore.BLACK + 'Using local night_blocks_propositions folder for ' +
                     #     tel + ' on the ' + d.datetime.strftime("%Y-%m-%d") + " to update hours")
 
